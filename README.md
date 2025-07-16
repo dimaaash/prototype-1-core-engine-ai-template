@@ -241,6 +241,209 @@ See `examples/` directory for:
 - Generated project samples
 - API documentation
 
+## 🔄 Example Workflow: Complete Code Generation Pipeline
+
+The `examples/example-workflow.sh` script demonstrates a complete end-to-end code generation workflow that showcases all four microservices working together. Here's a detailed breakdown of each step:
+
+### Step 1: Fetching Available Building Blocks
+```bash
+# GET http://localhost:8081/api/v1/building-blocks/primitives
+```
+
+**Purpose**: Discovers available Go code primitives that can be used as building blocks for code generation.
+
+**What happens**:
+- Queries the Building Blocks Service for all available primitives
+- Returns basic Go constructs like structs, functions, variables, interfaces
+- Each building block includes templates and parameter definitions
+- Validates that the building blocks service is running and responsive
+
+**Sample Response**:
+```json
+[
+  {
+    "id": "basic-struct",
+    "type": "struct",
+    "name": "basic-struct",
+    "description": "Basic struct template",
+    "template": "type {{.Name}} struct {\\n{{range .Fields}}\\t{{.Name}} {{.Type}} `json:\"{{.JsonTag}}\"`\\n{{end}}}",
+    "parameters": {"Fields": "ID,Name,Email", "Name": "MyStruct"},
+    "examples": ["type User struct { ID int `json:\"id\"` }"]
+  }
+]
+```
+
+### Step 2: Creating a New Template
+```bash
+# POST http://localhost:8082/api/v1/templates
+```
+
+**Purpose**: Creates a reusable template for generating specific Go code patterns.
+
+**What happens**:
+- Sends a template definition to the Template Service
+- Template includes Go template syntax with placeholders (e.g., `{{.package}}`, `{{.name}}`)
+- Defines required parameters for template processing
+- Template is stored and can be reused for multiple code generation requests
+
+**Sample Payload**:
+```json
+{
+  "name": "user-struct",
+  "description": "Template for creating a User struct",
+  "content": "package {{.package}}\\n\\ntype {{.name}} struct {\\n\\tID   int    `json:\"id\"`\\n\\tName string `json:\"name\"`\\n\\tEmail string `json:\"email\"`\\n}",
+  "parameters": [
+    {"name": "package", "type": "string", "description": "Go package name", "required": true},
+    {"name": "name", "type": "string", "description": "Struct name", "required": true}
+  ]
+}
+```
+
+### Step 3: Generating Code Using Visitor Pattern
+```bash
+# POST http://localhost:8083/api/v1/generate
+```
+
+**Purpose**: Uses the Visitor pattern to generate Go code from structured element definitions.
+
+**What happens**:
+- Sends element definitions (structs, functions) to the Generator Service
+- Generator Service processes each element using the Visitor pattern:
+  - Creates `StructElement` and `FunctionElement` objects
+  - Each element calls `Accept(visitor)` method
+  - `CodeGenerationVisitor` processes each element type with specific visit methods
+  - Generates appropriate Go code for each element
+  - Automatically detects cross-package references and adds import statements
+- Accumulates all generated files in a `CodeAccumulator`
+- Returns complete file set with proper package declarations and imports
+
+**Sample Payload**:
+```json
+{
+  "elements": [
+    {
+      "type": "struct",
+      "name": "User",
+      "package": "domain",
+      "fields": [
+        {"name": "ID", "type": "int", "tags": "json:\"id\""},
+        {"name": "Name", "type": "string", "tags": "json:\"name\""},
+        {"name": "Email", "type": "string", "tags": "json:\"email\""}
+      ]
+    },
+    {
+      "type": "function", 
+      "name": "NewUser",
+      "package": "application",
+      "parameters": [
+        {"name": "name", "type": "string"},
+        {"name": "email", "type": "string"}
+      ],
+      "returns": [{"type": "*domain.User"}],
+      "body": "return &domain.User{Name: name, Email: email}"
+    }
+  ]
+}
+```
+
+**Sample Response**:
+```json
+{
+  "accumulator": {
+    "files": [
+      {
+        "path": "internal/domain/user.go",
+        "content": "package domain\\n\\n// User represents a User\\ntype User struct {\\n\\tID int `json:\"id\"`\\n\\tName string `json:\"name\"`\\n\\tEmail string `json:\"email\"`\\n}",
+        "package": "domain",
+        "type": "struct"
+      },
+      {
+        "path": "internal/application/newuser.go", 
+        "content": "package application\\n\\nimport (\\n\\t\"go-factory-platform/services/compiler-builder-service/generated/internal/domain\"\\n)\\n\\n// NewUser implements NewUser\\nfunc NewUser(name string, email string) *domain.User {\\n\\treturn &domain.User{Name: name, Email: email}\\n}",
+        "package": "application",
+        "type": "function"
+      }
+    ]
+  }
+}
+```
+
+### Step 4: Writing Generated Files to Filesystem
+```bash
+# POST http://localhost:8084/api/v1/files/write
+```
+
+**Purpose**: Takes the accumulated generated files and writes them to the filesystem with proper directory structure.
+
+**What happens**:
+- Extracts the generated files from Step 3 response
+- Sends files to the Compiler Builder Service
+- Service creates the required directory structure (`internal/domain/`, `internal/application/`)
+- Writes each file to its designated location
+- Maintains proper package hierarchy and file organization
+- All files are written to the `generated/` directory for isolation
+
+**Sample Payload**:
+```json
+{
+  "files": [/* files from Step 3 */],
+  "output_path": "/path/to/generated",
+  "metadata": {
+    "workflow": "example-user-service", 
+    "generated_at": "2025-07-16T17:04:06Z"
+  }
+}
+```
+
+### Step 5: Compiling the Generated Project
+```bash
+# POST http://localhost:8084/api/v1/compile
+```
+
+**Purpose**: Validates that the generated Go code compiles successfully.
+
+**What happens**:
+- Compiler Builder Service runs `go build` on the generated project
+- Validates syntax, imports, and type correctness
+- Reports compilation success or detailed error messages
+- Ensures the generated code follows Go best practices
+- Confirms the entire generation workflow produced valid, compilable code
+
+**Sample Response (Success)**:
+```json
+{
+  "project_path": "/path/to/generated",
+  "success": true,
+  "output": "",
+  "build_time": 13248542,
+  "metadata": {}
+}
+```
+
+### 🎯 Key Workflow Benefits
+
+1. **End-to-End Validation**: From building blocks discovery to final compilation
+2. **Visitor Pattern Demonstration**: Shows extensible code generation architecture
+3. **Microservices Coordination**: Four services working together seamlessly  
+4. **Automatic Import Resolution**: Generator detects cross-package dependencies
+5. **Proper Package Structure**: Generated code follows Go conventions
+6. **Compilation Verification**: Ensures generated code is syntactically correct
+
+### 🚀 Running the Complete Workflow
+
+```bash
+# Start all services
+./manage.sh start-all
+
+# Run the complete workflow
+./examples/example-workflow.sh
+
+# Check generated files
+ls -la services/compiler-builder-service/generated/internal/
+```
+
+This workflow demonstrates the platform's ability to generate production-ready Go microservice code through a sophisticated, pattern-based approach!
+
 ## 🎉 What Makes This Special
 
 1. **Visitor Pattern Implementation**: Demonstrates advanced Go design patterns for extensible code generation
