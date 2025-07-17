@@ -247,9 +247,22 @@ func (s *ProjectStructureService) ValidateProjectStructure(req *domain.ValidateP
 // Helper methods
 
 func (s *ProjectStructureService) createTemplateVariables(req *domain.CreateProjectStructureRequest) map[string]interface{} {
+	// Extract package name from module name (take the last part after /)
+	packageName := req.Name
+	if strings.Contains(req.ModuleName, "/") {
+		parts := strings.Split(req.ModuleName, "/")
+		packageName = parts[len(parts)-1]
+	}
+
+	// Clean package name for Go compatibility
+	packageName = strings.ReplaceAll(packageName, "-", "")
+	packageName = strings.ReplaceAll(packageName, "_", "")
+	packageName = strings.ToLower(packageName)
+
 	variables := map[string]interface{}{
 		"ProjectName": req.Name,
 		"ModuleName":  req.ModuleName,
+		"PackageName": packageName,
 		"Description": fmt.Sprintf("A %s project", req.ProjectType),
 	}
 
