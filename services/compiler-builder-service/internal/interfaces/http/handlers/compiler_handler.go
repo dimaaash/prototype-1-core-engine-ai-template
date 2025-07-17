@@ -62,8 +62,13 @@ func (h *CompilerHandler) WriteFiles(c *gin.Context) {
 		Metadata: req.Metadata,
 	}
 
-	// Force outputPath to generatedDir
-	if err := h.service.WriteFiles(c.Request.Context(), accumulator, generatedDir); err != nil {
+	// Use provided output path, or fall back to generatedDir if not specified
+	outputPath := req.OutputPath
+	if outputPath == "" {
+		outputPath = generatedDir
+	}
+
+	if err := h.service.WriteFiles(c.Request.Context(), accumulator, outputPath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -71,7 +76,7 @@ func (h *CompilerHandler) WriteFiles(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Files written successfully",
 		"count":   len(req.Files),
-		"path":    req.OutputPath,
+		"path":    outputPath,
 	})
 }
 
@@ -79,6 +84,7 @@ func (h *CompilerHandler) WriteFiles(c *gin.Context) {
 func (h *CompilerHandler) CompileProject(c *gin.Context) {
 	var req struct {
 		ProjectPath string `json:"project_path"`
+		Path        string `json:"path"` // Alternative field name
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -86,8 +92,16 @@ func (h *CompilerHandler) CompileProject(c *gin.Context) {
 		return
 	}
 
-	// Force projectPath to generatedDir
-	result, err := h.service.CompileProject(c.Request.Context(), generatedDir)
+	// Use provided project path, or fall back to generatedDir if not specified
+	projectPath := req.ProjectPath
+	if projectPath == "" {
+		projectPath = req.Path
+	}
+	if projectPath == "" {
+		projectPath = generatedDir
+	}
+
+	result, err := h.service.CompileProject(c.Request.Context(), projectPath)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
