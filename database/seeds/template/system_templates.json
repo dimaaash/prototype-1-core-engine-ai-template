@@ -1,0 +1,202 @@
+{
+  "service": "template",
+  "table": "templates",
+  "description": "System-level Go Factory Platform templates extracted from hardcoded template-service code",
+  "dependencies": ["template.template_categories", "tenant.tenants"],
+  "data": [
+    {
+      "id": "d1234567-89ab-4def-8123-456789abcdef",
+      "tenant_id": "__SYSTEM_TENANT__",
+      "client_id": null,
+      "category_id": null,
+      "name": "Go Repository Pattern",
+      "display_name": "Go Repository Pattern Template",
+      "description": "Template for generating repository interfaces and implementations with CRUD operations",
+      "slug": "go-repository-pattern",
+      "content": "package repository\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"{{.ModulePath}}/internal/domain\"\n)\n\ntype {{.EntityName}}Repository interface {\n\tCreate(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error\n\tGetByID(ctx context.Context, id string) (*domain.{{.EntityName}}, error)\n\tUpdate(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error\n\tDelete(ctx context.Context, id string) error\n\tList(ctx context.Context) ([]*domain.{{.EntityName}}, error)\n}\n\ntype {{.EntityVarName}}Repository struct {\n\t// Add your storage implementation here\n}\n\nfunc New{{.EntityName}}Repository() {{.EntityName}}Repository {\n\treturn &{{.EntityVarName}}Repository{}\n}\n\nfunc (r *{{.EntityVarName}}Repository) Create(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {\n\t// Implementation here\n\treturn nil\n}\n\nfunc (r *{{.EntityVarName}}Repository) GetByID(ctx context.Context, id string) (*domain.{{.EntityName}}, error) {\n\t// Implementation here\n\treturn nil, nil\n}\n\nfunc (r *{{.EntityVarName}}Repository) Update(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {\n\t// Implementation here\n\treturn nil\n}\n\nfunc (r *{{.EntityVarName}}Repository) Delete(ctx context.Context, id string) error {\n\t// Implementation here\n\treturn nil\n}\n\nfunc (r *{{.EntityVarName}}Repository) List(ctx context.Context) ([]*domain.{{.EntityName}}, error) {\n\t// Implementation here\n\treturn nil, nil\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "standard",
+      "template_type": "code",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_global": true,
+      "is_system_template": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 20,
+      "usage_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "internal/repository/{{.snake_case_name}}_repository.go",
+      "variables": {
+        "EntityName": {
+          "type": "string",
+          "description": "Name of the entity",
+          "required": true,
+          "example": "User"
+        },
+        "EntityVarName": {
+          "type": "string",
+          "description": "Variable name for the entity",
+          "required": true,
+          "example": "user"
+        },
+        "ModulePath": {
+          "type": "string",
+          "description": "Go module path",
+          "required": true,
+          "example": "github.com/myorg/myapp"
+        }
+      },
+      "configuration": {
+        "supports_context": true,
+        "supports_error_handling": true,
+        "supports_crud": true
+      },
+      "dependencies": [],
+      "tags": ["go", "repository", "pattern", "crud", "interface", "context"],
+      "keywords": "go repository pattern crud interface context storage",
+      "created_at": "2024-01-01T10:00:00Z",
+      "updated_at": "2024-01-01T10:00:00Z",
+      "published_at": "2024-01-01T10:00:00Z"
+    },
+    {
+      "id": "e2345678-89ab-4def-8123-456789abcdef",
+      "tenant_id": "__SYSTEM_TENANT__",
+      "client_id": null,
+      "category_id": null,
+      "name": "Go Application Service",
+      "display_name": "Go Application Service Template",
+      "description": "Template for generating application services with business logic and validation",
+      "slug": "go-application-service",
+      "content": "package application\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\n\t\"{{.ModulePath}}/internal/domain\"\n)\n\ntype {{.EntityName}}Service struct {\n\trepository domain.{{.EntityName}}Repository\n}\n\nfunc New{{.EntityName}}Service(repository domain.{{.EntityName}}Repository) *{{.EntityName}}Service {\n\treturn &{{.EntityName}}Service{\n\t\trepository: repository,\n\t}\n}\n\nfunc (s *{{.EntityName}}Service) Create{{.EntityName}}(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {\n\t// Business logic here\n\tif err := s.validate{{.EntityName}}({{.EntityVarName}}); err != nil {\n\t\treturn fmt.Errorf(\"validation failed: %w\", err)\n\t}\n\n\treturn s.repository.Create(ctx, {{.EntityVarName}})\n}\n\nfunc (s *{{.EntityName}}Service) Get{{.EntityName}}(ctx context.Context, id string) (*domain.{{.EntityName}}, error) {\n\tif id == \"\" {\n\t\treturn nil, fmt.Errorf(\"id cannot be empty\")\n\t}\n\n\treturn s.repository.GetByID(ctx, id)\n}\n\nfunc (s *{{.EntityName}}Service) Update{{.EntityName}}(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {\n\t// Business logic here\n\tif err := s.validate{{.EntityName}}({{.EntityVarName}}); err != nil {\n\t\treturn fmt.Errorf(\"validation failed: %w\", err)\n\t}\n\n\treturn s.repository.Update(ctx, {{.EntityVarName}})\n}\n\nfunc (s *{{.EntityName}}Service) Delete{{.EntityName}}(ctx context.Context, id string) error {\n\tif id == \"\" {\n\t\treturn nil, fmt.Errorf(\"id cannot be empty\")\n\t}\n\n\treturn s.repository.Delete(ctx, id)\n}\n\nfunc (s *{{.EntityName}}Service) List{{.EntityName}}s(ctx context.Context) ([]*domain.{{.EntityName}}, error) {\n\treturn s.repository.List(ctx)\n}\n\nfunc (s *{{.EntityName}}Service) validate{{.EntityName}}({{.EntityVarName}} *domain.{{.EntityName}}) error {\n\tif {{.EntityVarName}} == nil {\n\t\treturn fmt.Errorf(\"{{.EntityVarName}} cannot be nil\")\n\t}\n\t// Add more validation logic here\n\treturn nil\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "standard",
+      "template_type": "code",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_global": true,
+      "is_system_template": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 25,
+      "usage_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "internal/application/{{.snake_case_name}}_service.go",
+      "variables": {
+        "EntityName": {
+          "type": "string",
+          "description": "Name of the entity",
+          "required": true,
+          "example": "User"
+        },
+        "EntityVarName": {
+          "type": "string",
+          "description": "Variable name for the entity",
+          "required": true,
+          "example": "user"
+        },
+        "ModulePath": {
+          "type": "string",
+          "description": "Go module path",
+          "required": true,
+          "example": "github.com/myorg/myapp"
+        }
+      },
+      "configuration": {
+        "supports_context": true,
+        "supports_validation": true,
+        "supports_error_handling": true,
+        "supports_business_logic": true
+      },
+      "dependencies": [],
+      "tags": ["go", "application", "service", "business-logic", "validation", "crud"],
+      "keywords": "go application service business logic validation crud",
+      "created_at": "2024-01-01T10:30:00Z",
+      "updated_at": "2024-01-01T10:30:00Z",
+      "published_at": "2024-01-01T10:30:00Z"
+    },
+    {
+      "id": "f3456789-89ab-4def-8123-456789abcdef",
+      "tenant_id": "__SYSTEM_TENANT__",
+      "client_id": null,
+      "category_id": null,
+      "name": "Go Gin HTTP Handler",
+      "display_name": "Go Gin HTTP Handler Template",
+      "description": "Template for generating HTTP handlers with Gin framework including full CRUD operations",
+      "slug": "go-gin-http-handler",
+      "content": "package handlers\n\nimport (\n\t\"net/http\"\n\n\t\"{{.ModulePath}}/internal/application\"\n\t\"{{.ModulePath}}/internal/domain\"\n\n\t\"github.com/gin-gonic/gin\"\n)\n\ntype {{.EntityName}}Handler struct {\n\tservice *application.{{.EntityName}}Service\n}\n\nfunc New{{.EntityName}}Handler(service *application.{{.EntityName}}Service) *{{.EntityName}}Handler {\n\treturn &{{.EntityName}}Handler{\n\t\tservice: service,\n\t}\n}\n\nfunc (h *{{.EntityName}}Handler) Create{{.EntityName}}(c *gin.Context) {\n\tvar {{.EntityVarName}} domain.{{.EntityName}}\n\tif err := c.ShouldBindJSON(&{{.EntityVarName}}); err != nil {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tif err := h.service.Create{{.EntityName}}(c.Request.Context(), &{{.EntityVarName}}); err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusCreated, {{.EntityVarName}})\n}\n\nfunc (h *{{.EntityName}}Handler) Get{{.EntityName}}(c *gin.Context) {\n\tid := c.Param(\"id\")\n\t{{.EntityVarName}}, err := h.service.Get{{.EntityName}}(c.Request.Context(), id)\n\tif err != nil {\n\t\tc.JSON(http.StatusNotFound, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusOK, {{.EntityVarName}})\n}\n\nfunc (h *{{.EntityName}}Handler) Update{{.EntityName}}(c *gin.Context) {\n\tid := c.Param(\"id\")\n\tvar {{.EntityVarName}} domain.{{.EntityName}}\n\tif err := c.ShouldBindJSON(&{{.EntityVarName}}); err != nil {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\t// Set ID from URL parameter\n\t{{.EntityVarName}}.ID = id\n\n\tif err := h.service.Update{{.EntityName}}(c.Request.Context(), &{{.EntityVarName}}); err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusOK, {{.EntityVarName}})\n}\n\nfunc (h *{{.EntityName}}Handler) Delete{{.EntityName}}(c *gin.Context) {\n\tid := c.Param(\"id\")\n\tif err := h.service.Delete{{.EntityName}}(c.Request.Context(), id); err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusNoContent, nil)\n}\n\nfunc (h *{{.EntityName}}Handler) List{{.EntityName}}s(c *gin.Context) {\n\t{{.EntityVarName}}s, err := h.service.List{{.EntityName}}s(c.Request.Context())\n\tif err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusOK, {{.EntityVarName}}s)\n}\n\nfunc (h *{{.EntityName}}Handler) RegisterRoutes(router *gin.Engine) {\n\tapi := router.Group(\"/api/v1\")\n\t{\n\t\tapi.POST(\"/{{.EntityNameLower}}\", h.Create{{.EntityName}})\n\t\tapi.GET(\"/{{.EntityNameLower}}/:id\", h.Get{{.EntityName}})\n\t\tapi.PUT(\"/{{.EntityNameLower}}/:id\", h.Update{{.EntityName}})\n\t\tapi.DELETE(\"/{{.EntityNameLower}}/:id\", h.Delete{{.EntityName}})\n\t\tapi.GET(\"/{{.EntityNameLower}}\", h.List{{.EntityName}}s)\n\t}\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "gin",
+      "template_type": "code",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_global": true,
+      "is_system_template": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 30,
+      "usage_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "internal/interfaces/http/handlers/{{.snake_case_name}}_handler.go",
+      "variables": {
+        "EntityName": {
+          "type": "string",
+          "description": "Name of the entity",
+          "required": true,
+          "example": "User"
+        },
+        "EntityVarName": {
+          "type": "string",
+          "description": "Variable name for the entity",
+          "required": true,
+          "example": "user"
+        },
+        "EntityNameLower": {
+          "type": "string",
+          "description": "Lowercase entity name for routes",
+          "required": true,
+          "example": "users"
+        },
+        "ModulePath": {
+          "type": "string",
+          "description": "Go module path",
+          "required": true,
+          "example": "github.com/myorg/myapp"
+        }
+      },
+      "configuration": {
+        "supports_authentication": false,
+        "supports_validation": true,
+        "supports_crud": true,
+        "supports_json": true
+      },
+      "dependencies": ["github.com/gin-gonic/gin"],
+      "tags": ["go", "gin", "http", "handler", "rest", "api", "crud"],
+      "keywords": "go gin http handler rest api crud json",
+      "created_at": "2024-01-01T11:00:00Z",
+      "updated_at": "2024-01-01T11:00:00Z",
+      "published_at": "2024-01-01T11:00:00Z"
+    }
+  ]
+}
