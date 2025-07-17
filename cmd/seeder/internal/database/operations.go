@@ -4,32 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/lib/pq"
 )
 
 // ProcessValue handles the conversion of values for database insertion
 func (c *Connection) ProcessValue(value interface{}) (interface{}, error) {
 	switch v := value.(type) {
 	case []interface{}:
-		// Check if it's a string array (for PostgreSQL TEXT[] columns)
-		if allStrings := true; len(v) > 0 {
-			for _, item := range v {
-				if _, isString := item.(string); !isString {
-					allStrings = false
-					break
-				}
-			}
-			if allStrings {
-				// Convert to PostgreSQL array format using pq.Array
-				var pgArray []string
-				for _, item := range v {
-					pgArray = append(pgArray, item.(string))
-				}
-				return pq.Array(pgArray), nil
-			}
-		}
-		// Convert other arrays to JSON
+		// Convert arrays to JSON (for JSONB columns)
 		jsonBytes, err := json.Marshal(v)
 		if err != nil {
 			return nil, err
@@ -43,8 +24,12 @@ func (c *Connection) ProcessValue(value interface{}) (interface{}, error) {
 		}
 		return string(jsonBytes), nil
 	case []string:
-		// Handle string slices as PostgreSQL arrays
-		return pq.Array(v), nil
+		// Convert string arrays to JSON (for JSONB columns)
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		return string(jsonBytes), nil
 	default:
 		return v, nil
 	}

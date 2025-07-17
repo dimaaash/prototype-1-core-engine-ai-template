@@ -1,0 +1,215 @@
+{
+  "service": "template",
+  "table": "templates",
+  "description": "Sample Go Factory Platform templates for code generation",
+  "dependencies": ["template.template_categories", "tenant.tenants"],
+  "data": [
+    {
+      "id": "a1234567-89ab-4def-8123-456789abcdef",
+      "tenant_id": "__SYSTEM_TENANT__",
+      "client_id": null,
+      "category_id": null,
+      "name": "Go REST API Handler",
+      "display_name": "Go REST API Handler Template",
+      "description": "Template for generating REST API handlers in Go with Gin framework",
+      "slug": "go-rest-api-handler",
+      "content": "package handlers\n\nimport (\n\t\"net/http\"\n\t\"github.com/gin-gonic/gin\"\n)\n\n// {{.HandlerName}}Handler handles {{.ResourceName}} operations\ntype {{.HandlerName}}Handler struct {\n\tservice {{.ServiceName}}Service\n}\n\n// New{{.HandlerName}}Handler creates a new {{.HandlerName}} handler\nfunc New{{.HandlerName}}Handler(service {{.ServiceName}}Service) *{{.HandlerName}}Handler {\n\treturn &{{.HandlerName}}Handler{\n\t\tservice: service,\n\t}\n}\n\n// Create{{.ResourceName}} creates a new {{.ResourceName}}\nfunc (h *{{.HandlerName}}Handler) Create{{.ResourceName}}(c *gin.Context) {\n\t// Implementation here\n\tc.JSON(http.StatusCreated, gin.H{\"message\": \"{{.ResourceName}} created\"})\n}\n\n// Get{{.ResourceName}} retrieves a {{.ResourceName}} by ID\nfunc (h *{{.HandlerName}}Handler) Get{{.ResourceName}}(c *gin.Context) {\n\tid := c.Param(\"id\")\n\t// Implementation here\n\tc.JSON(http.StatusOK, gin.H{\"id\": id, \"message\": \"{{.ResourceName}} found\"})\n}\n\n// Update{{.ResourceName}} updates a {{.ResourceName}}\nfunc (h *{{.HandlerName}}Handler) Update{{.ResourceName}}(c *gin.Context) {\n\tid := c.Param(\"id\")\n\t// Implementation here\n\tc.JSON(http.StatusOK, gin.H{\"id\": id, \"message\": \"{{.ResourceName}} updated\"})\n}\n\n// Delete{{.ResourceName}} deletes a {{.ResourceName}}\nfunc (h *{{.HandlerName}}Handler) Delete{{.ResourceName}}(c *gin.Context) {\n\tid := c.Param(\"id\")\n\t// Implementation here\n\tc.JSON(http.StatusOK, gin.H{\"id\": id, \"message\": \"{{.ResourceName}} deleted\"})\n}\n\n// List{{.ResourceName}}s lists all {{.ResourceName}}s\nfunc (h *{{.HandlerName}}Handler) List{{.ResourceName}}s(c *gin.Context) {\n\t// Implementation here\n\tc.JSON(http.StatusOK, gin.H{\"message\": \"{{.ResourceName}}s listed\"})\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "gin",
+      "template_type": "code",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_global": true,
+      "is_system_template": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "complexity_level": "beginner",
+      "estimated_time_minutes": 10,
+      "usage_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "internal/handlers/{{.snake_case_name}}_handler.go",
+      "variables": {
+        "HandlerName": {
+          "type": "string",
+          "description": "Name of the handler struct",
+          "required": true,
+          "example": "User"
+        },
+        "ResourceName": {
+          "type": "string", 
+          "description": "Name of the resource being handled",
+          "required": true,
+          "example": "User"
+        },
+        "ServiceName": {
+          "type": "string",
+          "description": "Name of the service interface",
+          "required": true,
+          "example": "User"
+        }
+      },
+      "configuration": {
+        "supports_authentication": true,
+        "supports_validation": true,
+        "supports_pagination": true
+      },
+      "dependencies": ["github.com/gin-gonic/gin"],
+      "tags": ["go", "gin", "rest", "api", "handler", "crud"],
+      "keywords": "go gin rest api handler crud http json",
+      "created_at": "2024-01-01T08:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z",
+      "published_at": "2024-01-01T08:00:00Z"
+    },
+    {
+      "id": "b2345678-89ab-4def-8123-456789abcdef",
+      "tenant_id": "__SYSTEM_TENANT__",
+      "client_id": null,
+      "category_id": null,
+      "name": "Go Service Interface",
+      "display_name": "Go Service Interface Template",
+      "description": "Template for generating service interfaces and implementations in Go",
+      "slug": "go-service-interface",
+      "content": "package service\n\nimport (\n\t\"context\"\n\t\"{{.ModuleName}}/internal/domain\"\n)\n\n// {{.ServiceName}}Service defines the interface for {{.ResourceName}} operations\ntype {{.ServiceName}}Service interface {\n\tCreate{{.ResourceName}}(ctx context.Context, {{.LowerResourceName}} *domain.{{.ResourceName}}) (*domain.{{.ResourceName}}, error)\n\tGet{{.ResourceName}}ByID(ctx context.Context, id string) (*domain.{{.ResourceName}}, error)\n\tUpdate{{.ResourceName}}(ctx context.Context, id string, {{.LowerResourceName}} *domain.{{.ResourceName}}) (*domain.{{.ResourceName}}, error)\n\tDelete{{.ResourceName}}(ctx context.Context, id string) error\n\tList{{.ResourceName}}s(ctx context.Context, limit, offset int) ([]*domain.{{.ResourceName}}, error)\n}\n\n// {{.LowerServiceName}}Service implements {{.ServiceName}}Service\ntype {{.LowerServiceName}}Service struct {\n\trepo {{.ServiceName}}Repository\n}\n\n// New{{.ServiceName}}Service creates a new {{.ServiceName}} service\nfunc New{{.ServiceName}}Service(repo {{.ServiceName}}Repository) {{.ServiceName}}Service {\n\treturn &{{.LowerServiceName}}Service{\n\t\trepo: repo,\n\t}\n}\n\n// Create{{.ResourceName}} creates a new {{.ResourceName}}\nfunc (s *{{.LowerServiceName}}Service) Create{{.ResourceName}}(ctx context.Context, {{.LowerResourceName}} *domain.{{.ResourceName}}) (*domain.{{.ResourceName}}, error) {\n\t// Add business logic here\n\treturn s.repo.Create(ctx, {{.LowerResourceName}})\n}\n\n// Get{{.ResourceName}}ByID retrieves a {{.ResourceName}} by ID\nfunc (s *{{.LowerServiceName}}Service) Get{{.ResourceName}}ByID(ctx context.Context, id string) (*domain.{{.ResourceName}}, error) {\n\treturn s.repo.GetByID(ctx, id)\n}\n\n// Update{{.ResourceName}} updates a {{.ResourceName}}\nfunc (s *{{.LowerServiceName}}Service) Update{{.ResourceName}}(ctx context.Context, id string, {{.LowerResourceName}} *domain.{{.ResourceName}}) (*domain.{{.ResourceName}}, error) {\n\t// Add business logic here\n\treturn s.repo.Update(ctx, id, {{.LowerResourceName}})\n}\n\n// Delete{{.ResourceName}} deletes a {{.ResourceName}}\nfunc (s *{{.LowerServiceName}}Service) Delete{{.ResourceName}}(ctx context.Context, id string) error {\n\treturn s.repo.Delete(ctx, id)\n}\n\n// List{{.ResourceName}}s lists {{.ResourceName}}s with pagination\nfunc (s *{{.LowerServiceName}}Service) List{{.ResourceName}}s(ctx context.Context, limit, offset int) ([]*domain.{{.ResourceName}}, error) {\n\treturn s.repo.List(ctx, limit, offset)\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "standard",
+      "template_type": "code",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_global": true,
+      "is_system_template": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 15,
+      "usage_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "internal/service/{{.snake_case_name}}_service.go",
+      "variables": {
+        "ServiceName": {
+          "type": "string",
+          "description": "Name of the service",
+          "required": true,
+          "example": "User"
+        },
+        "ResourceName": {
+          "type": "string",
+          "description": "Name of the resource/entity",
+          "required": true,
+          "example": "User"
+        },
+        "ModuleName": {
+          "type": "string",
+          "description": "Go module name",
+          "required": true,
+          "example": "github.com/myorg/myapp"
+        },
+        "LowerServiceName": {
+          "type": "string",
+          "description": "Lower case service name",
+          "required": true,
+          "example": "user"
+        },
+        "LowerResourceName": {
+          "type": "string",
+          "description": "Lower case resource name",
+          "required": true,
+          "example": "user"
+        }
+      },
+      "configuration": {
+        "supports_context": true,
+        "supports_pagination": true,
+        "supports_error_handling": true
+      },
+      "dependencies": [],
+      "tags": ["go", "service", "interface", "business-logic", "repository"],
+      "keywords": "go service interface business logic repository pattern",
+      "created_at": "2024-01-01T08:30:00Z",
+      "updated_at": "2024-01-01T08:30:00Z",
+      "published_at": "2024-01-01T08:30:00Z"
+    },
+    {
+      "id": "c3456789-89ab-4def-8123-456789abcdef",
+      "tenant_id": "__SYSTEM_TENANT__",
+      "client_id": "__DEFAULT_CLIENT__",
+      "category_id": null,
+      "name": "Custom Database Model",
+      "display_name": "Custom Database Model for ACME",
+      "description": "Client-specific template for ACME Corporation database models",
+      "slug": "acme-database-model",
+      "content": "package domain\n\nimport (\n\t\"time\"\n\t\"github.com/google/uuid\"\n)\n\n// {{.ModelName}} represents {{.Description}}\ntype {{.ModelName}} struct {\n\t// ACME Standard Fields\n\tID        uuid.UUID `json:\"id\" db:\"id\"`\n\tTenantID  uuid.UUID `json:\"tenant_id\" db:\"tenant_id\"`\n\tClientID  uuid.UUID `json:\"client_id\" db:\"client_id\"`\n\t\n\t// Business Fields\n{{range .Fields}}\t{{.Name}} {{.Type}} `json:\"{{.JsonTag}}\" db:\"{{.DbTag}}\"`\n{{end}}\t\n\t// ACME Audit Fields\n\tCreatedAt   time.Time  `json:\"created_at\" db:\"created_at\"`\n\tUpdatedAt   time.Time  `json:\"updated_at\" db:\"updated_at\"`\n\tCreatedBy   uuid.UUID  `json:\"created_by\" db:\"created_by\"`\n\tUpdatedBy   uuid.UUID  `json:\"updated_by\" db:\"updated_by\"`\n\tVersion     int        `json:\"version\" db:\"version\"`\n\tIsActive    bool       `json:\"is_active\" db:\"is_active\"`\n\t\n\t// ACME Compliance Fields\n\tComplianceStatus string     `json:\"compliance_status\" db:\"compliance_status\"`\n\tLastAuditDate    *time.Time `json:\"last_audit_date\" db:\"last_audit_date\"`\n}\n\n// TableName returns the database table name\nfunc (m *{{.ModelName}}) TableName() string {\n\treturn \"{{.TableName}}\"\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "standard",
+      "template_type": "code",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_global": false,
+      "is_system_template": false,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "complexity_level": "beginner",
+      "estimated_time_minutes": 8,
+      "usage_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "internal/domain/{{.snake_case_name}}.go",
+      "variables": {
+        "ModelName": {
+          "type": "string",
+          "description": "Name of the model struct",
+          "required": true,
+          "example": "Product"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Description of what the model represents",
+          "required": true,
+          "example": "a product in the system"
+        },
+        "TableName": {
+          "type": "string",
+          "description": "Database table name",
+          "required": true,
+          "example": "products"
+        },
+        "Fields": {
+          "type": "array",
+          "description": "Array of field objects",
+          "required": true,
+          "example": [
+            {"Name": "Name", "Type": "string", "JsonTag": "name", "DbTag": "name"},
+            {"Name": "Price", "Type": "float64", "JsonTag": "price", "DbTag": "price"}
+          ]
+        }
+      },
+      "configuration": {
+        "acme_compliance": true,
+        "audit_fields": true,
+        "multi_tenant": true
+      },
+      "dependencies": ["github.com/google/uuid"],
+      "tags": ["go", "domain", "model", "database", "acme", "compliance"],
+      "keywords": "go domain model database struct acme corporation compliance audit",
+      "created_at": "2024-01-01T09:00:00Z",
+      "updated_at": "2024-01-01T09:00:00Z",
+      "published_at": "2024-01-01T09:00:00Z"
+    }
+  ]
+}

@@ -42,7 +42,7 @@ func main() {
 	// Parse services list
 	var serviceList []string
 	if *services == "all" {
-		serviceList = []string{"core", "tenant", "auth", "user", "platform", "notification", "reporting"}
+		serviceList = []string{"core", "tenant", "auth", "user", "template", "platform", "notification", "reporting"}
 	} else {
 		serviceList = strings.Split(*services, ",")
 		for i, service := range serviceList {
