@@ -110,7 +110,7 @@ GENERATED_FILES=$(echo "$GENERATION_RESPONSE" | jq '.accumulator.files')
 WRITE_FILES_PAYLOAD=$(cat <<EOF
 {
   "files": $GENERATED_FILES,
-  "output_path": "/Users/dmitrykuznetsov/Documents/repos/ever-go/prototype-1-core-engine-ai-template/services/compiler-builder-service/generated",
+  "output_path": "/Users/dmitrykuznetsov/Documents/repos/ever-go/prototype-1-core-engine-ai-template/generated",
   "metadata": {
     "workflow": "example-user-service",
     "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"

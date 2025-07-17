@@ -12,14 +12,23 @@ import (
 )
 
 // Always use this directory for all file/project operations
-var generatedDir = filepath.Join(getServiceRoot(), "generated")
+var generatedDir = filepath.Join(getSolutionRoot(), "generated")
 
-// getServiceRoot returns the root directory of the service
-func getServiceRoot() string {
+// getSolutionRoot returns the root directory of the solution (not the service)
+func getSolutionRoot() string {
+	// Get the current working directory
 	dir, err := os.Getwd()
 	if err != nil {
 		return "." // fallback
 	}
+
+	// If we're running from a service directory, go up to solution root
+	// Services are typically in services/<service-name>, so we need to go up 2 levels
+	if filepath.Base(filepath.Dir(dir)) == "services" {
+		return filepath.Dir(filepath.Dir(dir))
+	}
+
+	// If we're already in the solution root, use it
 	return dir
 }
 
