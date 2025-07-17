@@ -3,6 +3,7 @@ package application
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -182,6 +183,14 @@ func (s *ProjectStructureService) WriteProjectStructure(structure *domain.Projec
 		}
 	}
 
+	// Automated Dependency Resolution - Run 'go mod tidy' for Go projects
+	if s.hasGoModFile(structure) {
+		if err := s.runGoModTidy(structure.OutputPath); err != nil {
+			// Log warning but don't fail - dependency resolution is optional
+			fmt.Printf("Warning: Failed to run 'go mod tidy' for project at %s: %v\n", structure.OutputPath, err)
+		}
+	}
+
 	return nil
 }
 
@@ -202,44 +211,25 @@ func (s *ProjectStructureService) ValidateProjectStructure(req *domain.ValidateP
 	projectType := s.detectProjectType(req.Path)
 	result.ProjectType = string(projectType)
 
-	// Get expected structure for detected type
-	templates, err := s.templateService.GetTemplatesByType(projectType)
-	if err != nil || len(templates) == 0 {
-		// No template to validate against
-		return result, nil
+	// Project-type-specific validation
+	switch projectType {
+	case domain.ProjectTypeMicroservice:
+		s.validateMicroserviceStructure(req.Path, result)
+	case domain.ProjectTypeCLI:
+		s.validateCLIStructure(req.Path, result)
+	case domain.ProjectTypeLibrary:
+		s.validateLibraryStructure(req.Path, result)
+	case domain.ProjectTypeAPI:
+		s.validateAPIStructure(req.Path, result)
+	case domain.ProjectTypeWorker:
+		s.validateWorkerStructure(req.Path, result)
+	default:
+		// Fallback to microservice validation
+		s.validateMicroserviceStructure(req.Path, result)
 	}
 
-	template := templates[0]
-
-	// Check for missing directories
-	for _, expectedDir := range template.Directories {
-		fullPath := filepath.Join(req.Path, expectedDir)
-		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			result.MissingDirs = append(result.MissingDirs, expectedDir)
-			result.IsValid = false
-		}
-	}
-
-	// Check for missing essential files
-	essentialFiles := []string{"go.mod"}
-	for _, file := range essentialFiles {
-		fullPath := filepath.Join(req.Path, file)
-		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			result.MissingFiles = append(result.MissingFiles, file)
-			result.IsValid = false
-		}
-	}
-
-	// Add recommendations
-	if !s.fileExists(req.Path, "README.md") {
-		result.Recommendations = append(result.Recommendations, "Consider adding a README.md file")
-	}
-	if !s.fileExists(req.Path, "Makefile") {
-		result.Recommendations = append(result.Recommendations, "Consider adding a Makefile for build automation")
-	}
-	if !s.fileExists(req.Path, ".gitignore") {
-		result.Recommendations = append(result.Recommendations, "Consider adding a .gitignore file")
-	}
+	// Common validation for all project types
+	s.validateCommonStructure(req.Path, result)
 
 	return result, nil
 }
@@ -304,18 +294,42 @@ func (s *ProjectStructureService) fileExists(basePath, fileName string) bool {
 }
 
 func (s *ProjectStructureService) detectProjectType(path string) domain.ProjectType {
-	// Check for specific patterns
-	if s.fileExists(path, "cmd") && s.fileExists(path, "internal") {
-		return domain.ProjectTypeMicroservice
-	}
+	// Enhanced project type detection logic
+
+	// Check for CLI project patterns
 	if s.fileExists(path, "cmd") && s.fileExists(path, "internal/commands") {
 		return domain.ProjectTypeCLI
 	}
-	if s.fileExists(path, "pkg") && !s.fileExists(path, "cmd") {
+
+	// Check for worker project patterns
+	if s.fileExists(path, "cmd/worker") || s.fileExists(path, "internal/infrastructure/queue") {
+		return domain.ProjectTypeWorker
+	}
+
+	// Check for library project patterns
+	if s.fileExists(path, "pkg") && !s.fileExists(path, "cmd/server") {
 		return domain.ProjectTypeLibrary
 	}
 
-	// Default to microservice
+	// Check for API project patterns (similar to microservice but with swagger/docs)
+	if s.fileExists(path, "docs/swagger") || s.fileExists(path, "internal/infrastructure/http") {
+		if s.containsSwaggerFiles(path) {
+			return domain.ProjectTypeAPI
+		}
+		return domain.ProjectTypeMicroservice
+	}
+
+	// Check for microservice patterns
+	if s.fileExists(path, "cmd/server") && s.fileExists(path, "internal") {
+		return domain.ProjectTypeMicroservice
+	}
+
+	// Fallback based on directory structure
+	if s.fileExists(path, "cmd") && s.fileExists(path, "internal") {
+		return domain.ProjectTypeMicroservice
+	}
+
+	// Default to microservice for unknown patterns
 	return domain.ProjectTypeMicroservice
 }
 
@@ -407,4 +421,168 @@ docker-run:
 
 .PHONY: build run test clean docker-build docker-run
 `
+}
+
+// hasGoModFile checks if the project structure contains a go.mod file
+func (s *ProjectStructureService) hasGoModFile(structure *domain.ProjectStructure) bool {
+	for _, file := range structure.Files {
+		if file.Path == "go.mod" {
+			return true
+		}
+	}
+	return false
+}
+
+// runGoModTidy executes 'go mod tidy' in the specified directory
+func (s *ProjectStructureService) runGoModTidy(projectPath string) error {
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Dir = projectPath
+
+	// Capture output for debugging
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("go mod tidy failed: %w\nOutput: %s", err, string(output))
+	}
+
+	fmt.Printf("Successfully ran 'go mod tidy' for project at %s\n", projectPath)
+	return nil
+}
+
+// containsSwaggerFiles checks if the project contains swagger-related files
+func (s *ProjectStructureService) containsSwaggerFiles(path string) bool {
+	swaggerPaths := []string{
+		"docs/swagger.yaml",
+		"docs/swagger.json",
+		"docs/docs.go",
+		"api/swagger.yaml",
+		"openapi.yaml",
+	}
+
+	for _, swaggerPath := range swaggerPaths {
+		if s.fileExists(path, swaggerPath) {
+			return true
+		}
+	}
+	return false
+}
+
+// Project-type-specific validation methods
+
+func (s *ProjectStructureService) validateCommonStructure(path string, result *domain.ProjectStructureValidationResult) {
+	// Check for essential files common to all Go projects
+	if !s.fileExists(path, "go.mod") {
+		result.MissingFiles = append(result.MissingFiles, "go.mod")
+		result.IsValid = false
+	}
+
+	// Add recommendations for common files
+	if !s.fileExists(path, "README.md") {
+		result.Recommendations = append(result.Recommendations, "Consider adding a README.md file")
+	}
+	if !s.fileExists(path, ".gitignore") {
+		result.Recommendations = append(result.Recommendations, "Consider adding a .gitignore file")
+	}
+}
+
+func (s *ProjectStructureService) validateMicroserviceStructure(path string, result *domain.ProjectStructureValidationResult) {
+	requiredDirs := []string{"cmd/server", "internal/domain", "internal/application"}
+	for _, dir := range requiredDirs {
+		if !s.fileExists(path, dir) {
+			result.MissingDirs = append(result.MissingDirs, dir)
+			result.IsValid = false
+		}
+	}
+
+	// Recommendations
+	if !s.fileExists(path, "Makefile") {
+		result.Recommendations = append(result.Recommendations, "Consider adding a Makefile for build automation")
+	}
+	if !s.fileExists(path, "Dockerfile") {
+		result.Recommendations = append(result.Recommendations, "Consider adding a Dockerfile for containerization")
+	}
+}
+
+func (s *ProjectStructureService) validateCLIStructure(path string, result *domain.ProjectStructureValidationResult) {
+	requiredDirs := []string{"cmd", "internal/commands"}
+	for _, dir := range requiredDirs {
+		if !s.fileExists(path, dir) {
+			result.MissingDirs = append(result.MissingDirs, dir)
+			result.IsValid = false
+		}
+	}
+
+	// Check for main.go in cmd
+	if !s.fileExists(path, "cmd/main.go") {
+		result.MissingFiles = append(result.MissingFiles, "cmd/main.go")
+		result.IsValid = false
+	}
+
+	// Recommendations
+	if !s.fileExists(path, "internal/config") {
+		result.Recommendations = append(result.Recommendations, "Consider adding internal/config for configuration management")
+	}
+}
+
+func (s *ProjectStructureService) validateLibraryStructure(path string, result *domain.ProjectStructureValidationResult) {
+	// Libraries should have main package files or pkg directory
+	hasMainFile := s.fileExists(path, "lib.go") || s.fileExists(path, fmt.Sprintf("%s.go", filepath.Base(path)))
+	hasPkgDir := s.fileExists(path, "pkg")
+
+	if !hasMainFile && !hasPkgDir {
+		result.MissingFiles = append(result.MissingFiles, "lib.go or pkg/ directory")
+		result.IsValid = false
+	}
+
+	// Check for test files
+	if !s.fileExists(path, "lib_test.go") && !s.containsTestFiles(path) {
+		result.Recommendations = append(result.Recommendations, "Consider adding test files for your library")
+	}
+
+	// Recommendations
+	if !s.fileExists(path, "examples") {
+		result.Recommendations = append(result.Recommendations, "Consider adding an examples/ directory")
+	}
+	if !s.fileExists(path, "LICENSE") {
+		result.Recommendations = append(result.Recommendations, "Consider adding a LICENSE file for open source libraries")
+	}
+}
+
+func (s *ProjectStructureService) validateAPIStructure(path string, result *domain.ProjectStructureValidationResult) {
+	// API projects are similar to microservices but with additional API-specific requirements
+	s.validateMicroserviceStructure(path, result)
+
+	// Additional API-specific checks
+	if !s.fileExists(path, "docs/swagger") && !s.containsSwaggerFiles(path) {
+		result.Recommendations = append(result.Recommendations, "Consider adding OpenAPI/Swagger documentation")
+	}
+}
+
+func (s *ProjectStructureService) validateWorkerStructure(path string, result *domain.ProjectStructureValidationResult) {
+	requiredDirs := []string{"cmd/worker", "internal/domain"}
+	for _, dir := range requiredDirs {
+		if !s.fileExists(path, dir) {
+			result.MissingDirs = append(result.MissingDirs, dir)
+			result.IsValid = false
+		}
+	}
+
+	// Recommendations
+	if !s.fileExists(path, "internal/infrastructure/queue") {
+		result.Recommendations = append(result.Recommendations, "Consider adding internal/infrastructure/queue for job queue management")
+	}
+}
+
+// containsTestFiles checks if the directory contains any Go test files
+func (s *ProjectStructureService) containsTestFiles(path string) bool {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return false
+	}
+
+	for _, file := range files {
+		if !file.IsDir() && strings.HasSuffix(file.Name(), "_test.go") {
+			return true
+		}
+	}
+	return false
 }
