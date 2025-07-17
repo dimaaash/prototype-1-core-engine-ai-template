@@ -1,0 +1,30 @@
+{
+  "migration_order": [
+    {
+      "phase": "core",
+      "services": ["core"],
+      "description": "Database extensions, functions, and shared types"
+    },
+    {
+      "phase": "foundation",
+      "services": ["tenant", "auth"],
+      "description": "Core multi-tenancy and authentication"
+    },
+    {
+      "phase": "core_services",
+      "services": ["user"],
+      "description": "User management and..."
+    },
+    {
+      "phase": "integration",
+      "services": ["platform", "notification", "reporting"],
+      "description": "External integrations and reporting"
+    }
+  ],
+  "dependencies": {
+    "user": ["tenant", "auth"],
+    "platform": ["tenant"],
+    "notification": ["tenant"],
+    "reporting": ["tenant"]
+  }
+}

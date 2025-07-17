@@ -1,0 +1,73 @@
+{
+  "service": "user",
+  "table": "user_roles",
+  "description": "User role assignments",
+  "dependencies": ["user.users", "auth.roles"],
+  "data": [
+    {
+      "id": "ur000001-89ab-cdef-0123-456789abcdef",
+      "user_id": "u0000001-89ab-cdef-0123-456789abcdef",
+      "role_id": "r0000001-89ab-cdef-0123-456789abcdef",
+      "assigned_by": "u0000001-89ab-cdef-0123-456789abcdef",
+      "assigned_at": "2024-01-01T00:00:00Z",
+      "expires_at": null,
+      "metadata": {
+        "reason": "system_initialization",
+        "assigned_by_name": "System"
+      },
+      "created_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "ur111001-89ab-cdef-0123-456789abcdef",
+      "user_id": "u1111001-89ab-cdef-0123-456789abcdef",
+      "role_id": "r0000003-89ab-cdef-0123-456789abcdef",
+      "assigned_by": "u0000001-89ab-cdef-0123-456789abcdef",
+      "assigned_at": "2024-01-01T08:00:00Z",
+      "expires_at": null,
+      "metadata": {
+        "reason": "new_employee_setup",
+        "assigned_by_name": "System Administrator"
+      },
+      "created_at": "2024-01-01T08:00:00Z"
+    },
+    {
+      "id": "ur111002-89ab-cdef-0123-456789abcdef",
+      "user_id": "u1111002-89ab-cdef-0123-456789abcdef",
+      "role_id": "r0000004-89ab-cdef-0123-456789abcdef",
+      "assigned_by": "u1111001-89ab-cdef-0123-456789abcdef",
+      "assigned_at": "2024-01-01T08:15:00Z",
+      "expires_at": null,
+      "metadata": {
+        "reason": "new_employee_setup",
+        "assigned_by_name": "John Doe"
+      },
+      "created_at": "2024-01-01T08:15:00Z"
+    },
+    {
+      "id": "ur111003-89ab-cdef-0123-456789abcdef",
+      "user_id": "u1111003-89ab-cdef-0123-456789abcdef",
+      "role_id": "r0000003-89ab-cdef-0123-456789abcdef",
+      "assigned_by": "u0000001-89ab-cdef-0123-456789abcdef",
+      "assigned_at": "2024-01-01T08:30:00Z",
+      "expires_at": null,
+      "metadata": {
+        "reason": "regional_manager_setup",
+        "assigned_by_name": "System Administrator"
+      },
+      "created_at": "2024-01-01T08:30:00Z"
+    },
+    {
+      "id": "ur222001-89ab-cdef-0123-456789abcdef",
+      "user_id": "u2222001-89ab-cdef-0123-456789abcdef",
+      "role_id": "r0000003-89ab-cdef-0123-456789abcdef",
+      "assigned_by": "u0000001-89ab-cdef-0123-456789abcdef",
+      "assigned_at": "2024-01-01T09:00:00Z",
+      "expires_at": null,
+      "metadata": {
+        "reason": "new_tenant_setup",
+        "assigned_by_name": "System Administrator"
+      },
+      "created_at": "2024-01-01T09:00:00Z"
+    }
+  ]
+}

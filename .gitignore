@@ -116,3 +116,5 @@ config.local.json
 # Testing artifacts
 testdata/output/
 test-results/
+
+bin/

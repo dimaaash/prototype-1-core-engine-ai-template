@@ -5,6 +5,10 @@
 SERVICES = building-blocks-service template-service generator-service compiler-builder-service project-structure-service
 SERVICE_PORTS = 8081 8082 8083 8084 8085
 SCRIPT_DIR = scripts
+MIGRATOR := ./bin/migrator
+SEEDER := ./bin/seeder
+MIGRATION_PATH := ./database/migrations
+DATABASE_URL := postgresql://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable
 
 # Colors for output
 GREEN = \033[0;32m
@@ -12,7 +16,7 @@ YELLOW = \033[1;33m
 RED = \033[0;31m
 NC = \033[0m # No Color
 
-.PHONY: help deps build run start stop test clean status logs health check-deps install-tools docker-build
+.PHONY: help deps build run start stop test clean status logs health check-deps install-tools docker-build migrate-up migrate-down migrate-create migrate-status migrate-rollback migrate-build seed
 
 # Default target
 help:
@@ -52,6 +56,16 @@ help:
 	@echo "  make install-tools  - Install required development tools"
 	@echo "  make example        - Run the platform example"
 	@echo "  make docker-build   - Build Docker images for all services"
+	@echo ""
+	@echo "$(YELLOW)Database Operations:$(NC)"
+	@echo "  make migrate-build    - Build migration and seeder tools"
+	@echo "  make migrate-up       - Run database migrations for all services"
+	@echo "  make migrate-down     - Rollback all database migrations"
+	@echo "  make migrate-create   - Create new migration (usage: make migrate-create service=tenant name=migration_name)"
+	@echo "  make migrate-status   - Show migration status for all services"
+	@echo "  make migrate-rollback - Rollback last migration (usage: make migrate-rollback service=tenant)"
+	@echo "  make seed            - Run database seeder"
+	@echo "  make db-reset        - Reset database (down, up, seed)"
 	@echo ""
 
 # Global operations
@@ -254,3 +268,57 @@ start-ordered:
 	@sleep 2
 	@echo "$(GREEN)✅ All services started in order!$(NC)"
 	@make status
+
+
+# Database Operations
+migrate-build: ## Build migration and seeder tools
+	@echo "$(GREEN)🔨 Building migration tools...$(NC)"
+	@mkdir -p bin
+	@go build -o bin/migrator ./cmd/migrator
+	@go build -o bin/seeder ./cmd/seeder
+	@echo "$(GREEN)✅ Migration tools built successfully!$(NC)"
+
+migrate-up: migrate-build ## Run database migrations
+	@echo "$(GREEN)🗄️ Running database migrations...$(NC)"
+	@$(MIGRATOR) -action=up -service=all -db-url="$(DATABASE_URL)"
+	@echo "$(GREEN)✅ Database migrations completed!$(NC)"
+
+migrate-down: migrate-build ## Rollback database migrations
+	@echo "$(GREEN)🗄️ Rolling back database migrations...$(NC)"
+	@$(MIGRATOR) -action=down -service=all -db-url="$(DATABASE_URL)"
+	@echo "$(GREEN)✅ Database rollback completed!$(NC)"
+
+migrate-create: migrate-build ## Create new migration (usage: make migrate-create service=tenant name=migration_name)
+	@if [ -z "$(service)" ] || [ -z "$(name)" ]; then \
+		echo "$(RED)❌ Error: Both service and name are required$(NC)"; \
+		echo "$(YELLOW)Usage: make migrate-create service=<service> name=<migration_name>$(NC)"; \
+		echo "$(YELLOW)Example: make migrate-create service=tenant name=create_tenants_table$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)📝 Creating migration: $(name) for service: $(service)$(NC)"
+	@$(MIGRATOR) -action=create -service="$(service)" -name="$(name)"
+	@echo "$(GREEN)✅ Migration created successfully!$(NC)"
+
+migrate-status: migrate-build ## Show migration status for all services
+	@echo "$(GREEN)📊 Checking migration status...$(NC)"
+	@$(MIGRATOR) -action=status -service=all -db-url="$(DATABASE_URL)"
+
+migrate-rollback: migrate-build ## Rollback last migration (usage: make migrate-rollback service=tenant or service=all)
+	@if [ -z "$(service)" ]; then \
+		echo "$(RED)❌ Error: service parameter is required$(NC)"; \
+		echo "$(YELLOW)Usage: make migrate-rollback service=<service>$(NC)"; \
+		echo "$(YELLOW)Example: make migrate-rollback service=tenant$(NC)"; \
+		echo "$(YELLOW)Example: make migrate-rollback service=all$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)⏪ Rolling back last migration for service: $(service)$(NC)"
+	@$(MIGRATOR) -action=rollback -service="$(service)" -db-url="$(DATABASE_URL)"
+	@echo "$(GREEN)✅ Rollback completed!$(NC)"
+
+seed: migrate-build ## Run database seeder
+	@echo "$(GREEN)🌱 Running database seeder...$(NC)"
+	@$(SEEDER) -db-url="$(DATABASE_URL)"
+	@echo "$(GREEN)✅ Database seeding completed!$(NC)"
+
+# Database Management
+db-reset: migrate-down migrate-up seed ## Reset database (down, up, seed)
