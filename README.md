@@ -264,8 +264,8 @@ This generates a complete Go microservice with:
 
 ### Service Communication Flow
 ```
-Building Blocks ←→ Template Service ←→ Generator Service ←→ Compiler Builder
-     (8081)           (8082)              (8083)              (8084)
+Building Blocks ←→ Template Service ←→ Generator Service ←→ Project Structure ←→ Compiler Builder
+     (8081)           (8082)              (8083)              (8085)             (8084)
 ```
 
 ## 🛠️ Development
