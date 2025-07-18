@@ -1,0 +1,581 @@
+{
+  "service": "template",
+  "table": "public_templates",
+  "description": "Templates extracted from hardcoded implementations in template-service and generator-service",
+  "dependencies": ["template.public_template_categories"],
+  "data": [
+    {
+      "id": "95678901-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go Code Generator Struct",
+      "display_name": "Go Code Generator Struct Template",
+      "description": "Template for generating Go structs using the generator service pattern",
+      "slug": "go-code-generator-struct",
+      "template_category": "go-patterns",
+      "template_type": "code",
+      "content": "package {{.PackageName}}\n\n{{if .Imports}}import (\n{{range .Imports}}\t\"{{.}}\"\n{{end}})\n{{end}}\n\n// {{.StructName}} represents {{.Description}}\ntype {{.StructName}} struct {\n{{range .Fields}}\t{{.Name}} {{.Type}} `{{.Tags}}`\n{{end}}\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "standard",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": false,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 15,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "{{.PackageName}}/{{.snake_case_name}}.go",
+      "variables": {
+        "PackageName": {
+          "type": "string",
+          "description": "Go package name",
+          "required": true,
+          "example": "domain"
+        },
+        "StructName": {
+          "type": "string",
+          "description": "Name of the struct",
+          "required": true,
+          "example": "User"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Description of what the struct represents",
+          "required": false,
+          "example": "a user in the system"
+        },
+        "Fields": {
+          "type": "array",
+          "description": "Array of field objects with Name, Type, and Tags",
+          "required": true,
+          "example": "[{\"Name\": \"ID\", \"Type\": \"string\", \"Tags\": \"json:\\\"id\\\"\"}]"
+        },
+        "Imports": {
+          "type": "array",
+          "description": "Array of import paths",
+          "required": false,
+          "example": "[\"time\", \"github.com/google/uuid\"]"
+        }
+      },
+      "configuration": {
+        "supports_imports": true,
+        "supports_tags": true,
+        "supports_multiple_fields": true
+      },
+      "dependencies": [],
+      "tags": ["go", "struct", "generator", "code-generation", "fields"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go struct generator code generation fields imports tags",
+      "created_at": "2024-01-01T13:00:00Z",
+      "updated_at": "2024-01-01T13:00:00Z",
+      "published_at": "2024-01-01T13:00:00Z"
+    },
+    {
+      "id": "96789012-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go Interface Generator",
+      "display_name": "Go Interface Generator Template",
+      "description": "Template for generating Go interfaces with multiple methods",
+      "slug": "go-interface-generator",
+      "template_category": "go-patterns",
+      "template_type": "code",
+      "content": "package {{.PackageName}}\n\n{{if .Imports}}import (\n{{range .Imports}}\t\"{{.}}\"\n{{end}})\n{{end}}\n\n// {{.InterfaceName}} defines {{.Description}}\ntype {{.InterfaceName}} interface {\n{{range .Methods}}\t{{.Name}}({{range $i, $p := .Parameters}}{{if $i}}, {{end}}{{$p.Name}} {{$p.Type}}{{end}}) ({{range $i, $r := .Returns}}{{if $i}}, {{end}}{{$r.Type}}{{end}})\n{{end}}\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "standard",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": false,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 20,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "{{.PackageName}}/{{.snake_case_name}}.go",
+      "variables": {
+        "PackageName": {
+          "type": "string",
+          "description": "Go package name",
+          "required": true,
+          "example": "domain"
+        },
+        "InterfaceName": {
+          "type": "string",
+          "description": "Name of the interface",
+          "required": true,
+          "example": "UserService"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Description of what the interface defines",
+          "required": false,
+          "example": "the contract for user operations"
+        },
+        "Methods": {
+          "type": "array",
+          "description": "Array of method objects with Name, Parameters, and Returns",
+          "required": true,
+          "example": "[{\"Name\": \"Create\", \"Parameters\": [{\"Name\": \"user\", \"Type\": \"*User\"}], \"Returns\": [{\"Type\": \"error\"}]}]"
+        },
+        "Imports": {
+          "type": "array",
+          "description": "Array of import paths",
+          "required": false,
+          "example": "[\"context\"]"
+        }
+      },
+      "configuration": {
+        "supports_imports": true,
+        "supports_multiple_methods": true,
+        "supports_parameters": true,
+        "supports_returns": true
+      },
+      "dependencies": [],
+      "tags": ["go", "interface", "generator", "methods", "contract"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go interface generator methods contract abstraction",
+      "created_at": "2024-01-01T13:30:00Z",
+      "updated_at": "2024-01-01T13:30:00Z",
+      "published_at": "2024-01-01T13:30:00Z"
+    },
+    {
+      "id": "97890123-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go Function Generator",
+      "display_name": "Go Function Generator Template",
+      "description": "Template for generating Go functions with parameters and return values",
+      "slug": "go-function-generator",
+      "template_category": "snippets",
+      "template_type": "code",
+      "content": "package {{.PackageName}}\n\n{{if .Imports}}import (\n{{range .Imports}}\t\"{{.}}\"\n{{end}})\n{{end}}\n\n// {{.FunctionName}} {{.Description}}\nfunc {{.FunctionName}}({{range $i, $p := .Parameters}}{{if $i}}, {{end}}{{$p.Name}} {{$p.Type}}{{end}}) ({{range $i, $r := .Returns}}{{if $i}}, {{end}}{{$r.Type}}{{end}}) {\n{{if .Body}}\t{{.Body}}{{else}}\t// TODO: Implement function logic\n\tpanic(\"not implemented\"){{end}}\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "standard",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": false,
+      "complexity_level": "beginner",
+      "estimated_time_minutes": 10,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "{{.PackageName}}/{{.snake_case_name}}.go",
+      "variables": {
+        "PackageName": {
+          "type": "string",
+          "description": "Go package name",
+          "required": true,
+          "example": "service"
+        },
+        "FunctionName": {
+          "type": "string",
+          "description": "Name of the function",
+          "required": true,
+          "example": "CreateUser"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Description of what the function does",
+          "required": false,
+          "example": "creates a new user in the system"
+        },
+        "Parameters": {
+          "type": "array",
+          "description": "Array of parameter objects with Name and Type",
+          "required": false,
+          "example": "[{\"Name\": \"name\", \"Type\": \"string\"}, {\"Name\": \"email\", \"Type\": \"string\"}]"
+        },
+        "Returns": {
+          "type": "array",
+          "description": "Array of return type objects",
+          "required": false,
+          "example": "[{\"Type\": \"*User\"}, {\"Type\": \"error\"}]"
+        },
+        "Body": {
+          "type": "string",
+          "description": "Function body implementation",
+          "required": false,
+          "example": "return &User{Name: name, Email: email}, nil"
+        },
+        "Imports": {
+          "type": "array",
+          "description": "Array of import paths",
+          "required": false,
+          "example": "[\"errors\"]"
+        }
+      },
+      "configuration": {
+        "supports_imports": true,
+        "supports_parameters": true,
+        "supports_returns": true,
+        "supports_custom_body": true
+      },
+      "dependencies": [],
+      "tags": ["go", "function", "generator", "parameters", "returns"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go function generator parameters returns implementation",
+      "created_at": "2024-01-01T14:00:00Z",
+      "updated_at": "2024-01-01T14:00:00Z",
+      "published_at": "2024-01-01T14:00:00Z"
+    },
+    {
+      "id": "98901234-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go Microservice Project",
+      "display_name": "Go Microservice Project Template",
+      "description": "Template for creating complete Go microservice project structure with clean architecture",
+      "slug": "go-microservice-project",
+      "template_category": "microservices",
+      "template_type": "project",
+      "content": "# {{.ProjectName}}\n\n{{.Description}}\n\n## Getting Started\n\n```bash\n# Install dependencies\ngo mod tidy\n\n# Run the server\ngo run cmd/server/main.go\n```\n\n## API Endpoints\n\n- `GET /health` - Health check endpoint\n\n## Project Structure\n\n```\n{{.ProjectName}}/\n├── cmd/\n│   └── server/\n│       └── main.go\n├── internal/\n│   ├── application/\n│   ├── domain/\n│   ├── infrastructure/\n│   └── interfaces/\n│       └── http/\n├── pkg/\n├── docs/\n├── docker/\n├── scripts/\n├── go.mod\n├── go.sum\n├── README.md\n├── Dockerfile\n└── Makefile\n```",
+      "content_type": "plaintext",
+      "language": "go",
+      "framework": "gin",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": true,
+      "complexity_level": "advanced",
+      "estimated_time_minutes": 60,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".md",
+      "output_path": "README.md",
+      "variables": {
+        "ProjectName": {
+          "type": "string",
+          "description": "Name of the microservice project",
+          "required": true,
+          "example": "user-service"
+        },
+        "ModuleName": {
+          "type": "string",
+          "description": "Go module name",
+          "required": true,
+          "example": "github.com/myorg/user-service"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Description of the microservice",
+          "required": true,
+          "example": "A user management microservice with clean architecture"
+        }
+      },
+      "configuration": {
+        "supports_clean_architecture": true,
+        "supports_docker": true,
+        "supports_makefile": true,
+        "supports_health_check": true
+      },
+      "dependencies": ["github.com/gin-gonic/gin"],
+      "tags": ["go", "microservice", "project", "clean-architecture", "gin"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go microservice project clean architecture gin docker",
+      "created_at": "2024-01-01T14:30:00Z",
+      "updated_at": "2024-01-01T14:30:00Z",
+      "published_at": "2024-01-01T14:30:00Z"
+    },
+    {
+      "id": "99012345-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go CLI Project",
+      "display_name": "Go CLI Project Template",
+      "description": "Template for creating Go CLI applications using Cobra framework",
+      "slug": "go-cli-project",
+      "template_category": "boilerplate",
+      "template_type": "project",
+      "content": "# {{.ProjectName}}\n\n{{.Description}}\n\n## Installation\n\n```bash\n# Install dependencies\ngo mod tidy\n\n# Build the CLI\ngo build -o bin/{{.ProjectName}} cmd/main.go\n\n# Or install globally\ngo install\n```\n\n## Usage\n\n```bash\n# Run from source\ngo run cmd/main.go --help\n\n# Or run the built binary\n./bin/{{.ProjectName}} --help\n```\n\n## Project Structure\n\n```\n{{.ProjectName}}/\n├── cmd/\n│   └── main.go\n├── internal/\n│   └── commands/\n│       └── root.go\n├── pkg/\n├── docs/\n├── go.mod\n├── go.sum\n├── README.md\n└── Makefile\n```",
+      "content_type": "plaintext",
+      "language": "go",
+      "framework": "cobra",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": true,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 30,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".md",
+      "output_path": "README.md",
+      "variables": {
+        "ProjectName": {
+          "type": "string",
+          "description": "Name of the CLI project",
+          "required": true,
+          "example": "myapp"
+        },
+        "ModuleName": {
+          "type": "string",
+          "description": "Go module name",
+          "required": true,
+          "example": "github.com/myorg/myapp"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Description of the CLI application",
+          "required": true,
+          "example": "A powerful command-line tool for managing resources"
+        }
+      },
+      "configuration": {
+        "supports_cobra": true,
+        "supports_viper": true,
+        "supports_makefile": true,
+        "supports_subcommands": true
+      },
+      "dependencies": ["github.com/spf13/cobra", "github.com/spf13/viper"],
+      "tags": ["go", "cli", "project", "cobra", "command-line"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go cli project cobra command line tool viper",
+      "created_at": "2024-01-01T15:00:00Z",
+      "updated_at": "2024-01-01T15:00:00Z",
+      "published_at": "2024-01-01T15:00:00Z"
+    },
+    {
+      "id": "90123456-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go Library Project",
+      "display_name": "Go Library Project Template",
+      "description": "Template for creating reusable Go library packages with proper structure",
+      "slug": "go-library-project",
+      "template_category": "boilerplate",
+      "template_type": "project",
+      "content": "# {{.ProjectName}}\n\n{{.Description}}\n\n## Installation\n\n```bash\ngo get {{.ModuleName}}\n```\n\n## Usage\n\n```go\npackage main\n\nimport (\n\t\"fmt\"\n\t\"{{.ModuleName}}\"\n)\n\nfunc main() {\n\t// Basic usage\n\tfmt.Println({{.PackageName}}.Hello(\"World\"))\n\t\n\t// With configuration\n\tconfig := {{.PackageName}}.NewConfig()\n\tconfig.Debug = true\n\t\n\tclient := {{.PackageName}}.NewClient(config)\n\tfmt.Printf(\"Version: %s\\n\", {{.PackageName}}.Version())\n}\n```\n\n## Development\n\n```bash\n# Run tests\ngo test ./...\n\n# Run tests with coverage\ngo test -cover ./...\n\n# Build\ngo build\n```\n\n## API Reference\n\n### Functions\n\n- `Version() string` - Returns the library version\n- `Hello(name string) string` - Returns a greeting message\n- `NewConfig() *Config` - Creates default configuration\n- `NewClient(config *Config) *Client` - Creates a new client\n\n### Types\n\n- `Config` - Library configuration\n- `Client` - Main library client",
+      "content_type": "plaintext",
+      "language": "go",
+      "framework": "standard",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": true,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 25,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".md",
+      "output_path": "README.md",
+      "variables": {
+        "ProjectName": {
+          "type": "string",
+          "description": "Name of the library project",
+          "required": true,
+          "example": "mylib"
+        },
+        "PackageName": {
+          "type": "string",
+          "description": "Go package name",
+          "required": true,
+          "example": "mylib"
+        },
+        "ModuleName": {
+          "type": "string",
+          "description": "Go module name",
+          "required": true,
+          "example": "github.com/myorg/mylib"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Description of the library",
+          "required": true,
+          "example": "A powerful Go library for handling common tasks"
+        }
+      },
+      "configuration": {
+        "supports_testing": true,
+        "supports_coverage": true,
+        "supports_documentation": true,
+        "supports_examples": true
+      },
+      "dependencies": ["github.com/stretchr/testify"],
+      "tags": ["go", "library", "project", "package", "reusable"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go library project package reusable module",
+      "created_at": "2024-01-01T15:30:00Z",
+      "updated_at": "2024-01-01T15:30:00Z",
+      "published_at": "2024-01-01T15:30:00Z"
+    },
+    {
+      "id": "01234567-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go API Project",
+      "display_name": "Go API Project Template",
+      "description": "Template for creating REST API services with OpenAPI specification and Swagger documentation",
+      "slug": "go-api-project",
+      "template_category": "microservices",
+      "template_type": "project",
+      "content": "# {{.ProjectName}}\n\n{{.Description}}\n\n## Getting Started\n\n```bash\n# Install dependencies\ngo mod tidy\n\n# Generate Swagger documentation\nswag init -g cmd/server/main.go\n\n# Run the API server\ngo run cmd/server/main.go\n```\n\n## API Documentation\n\nSwagger UI available at: http://localhost:8080/swagger/index.html\n\n## API Endpoints\n\n- `GET /health` - Health check endpoint\n- `GET /api/v1/ping` - Ping endpoint\n- `GET /swagger/*` - Swagger documentation\n\n## Project Structure\n\n```\n{{.ProjectName}}/\n├── cmd/\n│   └── server/\n│       └── main.go\n├── internal/\n│   ├── api/\n│   ├── handlers/\n│   └── middleware/\n├── docs/\n├── docker/\n├── go.mod\n├── go.sum\n├── README.md\n├── Dockerfile\n└── Makefile\n```",
+      "content_type": "plaintext",
+      "language": "go",
+      "framework": "gin",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": true,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 45,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".md",
+      "output_path": "README.md",
+      "variables": {
+        "ProjectName": {
+          "type": "string",
+          "description": "Name of the API project",
+          "required": true,
+          "example": "user-api"
+        },
+        "ModuleName": {
+          "type": "string",
+          "description": "Go module name",
+          "required": true,
+          "example": "github.com/myorg/user-api"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Description of the API service",
+          "required": true,
+          "example": "A RESTful API service for user management with Swagger documentation"
+        }
+      },
+      "configuration": {
+        "supports_swagger": true,
+        "supports_openapi": true,
+        "supports_gin": true,
+        "supports_middleware": true
+      },
+      "dependencies": ["github.com/gin-gonic/gin", "github.com/swaggo/gin-swagger", "github.com/swaggo/files", "github.com/swaggo/swag"],
+      "tags": ["go", "api", "rest", "swagger", "openapi", "gin"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go api rest swagger openapi gin documentation",
+      "created_at": "2024-01-01T16:00:00Z",
+      "updated_at": "2024-01-01T16:00:00Z",
+      "published_at": "2024-01-01T16:00:00Z"
+    },
+    {
+      "id": "12345678-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go Worker Project",
+      "display_name": "Go Worker Project Template",
+      "description": "Template for creating background worker or job processor applications",
+      "slug": "go-worker-project",
+      "template_category": "microservices",
+      "template_type": "project",
+      "content": "# {{.ProjectName}}\n\n{{.Description}}\n\n## Getting Started\n\n```bash\ngo run cmd/worker/main.go\n```\n\n## Configuration\n\nEnvironment variables:\n\n- `WORKER_CONCURRENCY` - Number of concurrent workers (default: 1)\n- `QUEUE_NAME` - Name of the job queue (default: \"default\")\n- `REDIS_URL` - Redis connection URL for job storage\n\n## Project Structure\n\n```\n{{.ProjectName}}/\n├── cmd/\n│   └── worker/\n│       └── main.go\n├── internal/\n│   ├── worker/\n│   ├── jobs/\n│   └── queue/\n├── pkg/\n├── docker/\n├── go.mod\n├── go.sum\n├── README.md\n├── Dockerfile\n└── Makefile\n```",
+      "content_type": "plaintext",
+      "language": "go",
+      "framework": "standard",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": false,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 40,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".md",
+      "output_path": "README.md",
+      "variables": {
+        "ProjectName": {
+          "type": "string",
+          "description": "Name of the worker project",
+          "required": true,
+          "example": "email-worker"
+        },
+        "ModuleName": {
+          "type": "string",
+          "description": "Go module name",
+          "required": true,
+          "example": "github.com/myorg/email-worker"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Description of the worker service",
+          "required": true,
+          "example": "A background worker for processing email jobs"
+        }
+      },
+      "configuration": {
+        "supports_concurrency": true,
+        "supports_queues": true,
+        "supports_redis": true,
+        "supports_job_processing": true
+      },
+      "dependencies": [],
+      "tags": ["go", "worker", "background", "jobs", "queue", "processing"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go worker background jobs queue processing redis",
+      "created_at": "2024-01-01T16:30:00Z",
+      "updated_at": "2024-01-01T16:30:00Z",
+      "published_at": "2024-01-01T16:30:00Z"
+    }
+  ]
+}
