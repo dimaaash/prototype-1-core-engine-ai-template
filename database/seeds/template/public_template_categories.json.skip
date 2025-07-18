@@ -1,0 +1,104 @@
+{
+  "service": "template",
+  "table": "public_template_categories",
+  "description": "Categories for organizing public templates",
+  "dependencies": [],
+  "data": [
+    {
+      "id": "11111111-89ab-4def-8123-456789abcdef",
+      "name": "Basic Templates",
+      "display_name": "Basic Templates",
+      "slug": "basic",
+      "description": "Simple, beginner-friendly templates for common structures",
+      "icon": "📦",
+      "is_active": true,
+      "sort_order": 1,
+      "created_at": "2024-01-01T08:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z"
+    },
+    {
+      "id": "22222222-89ab-4def-8123-456789abcdef",
+      "name": "Domain Models",
+      "display_name": "Domain Models",
+      "slug": "domain",
+      "description": "Domain entities, value objects, and business models",
+      "icon": "🏛️",
+      "is_active": true,
+      "sort_order": 2,
+      "created_at": "2024-01-01T08:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z"
+    },
+    {
+      "id": "33333333-89ab-4def-8123-456789abcdef",
+      "name": "Repository Pattern",
+      "display_name": "Repository Pattern",
+      "slug": "repository",
+      "description": "Data access layer templates with repository pattern",
+      "icon": "🗄️",
+      "is_active": true,
+      "sort_order": 3,
+      "created_at": "2024-01-01T08:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z"
+    },
+    {
+      "id": "44444444-89ab-4def-8123-456789abcdef",
+      "name": "Application Services",
+      "display_name": "Application Services",
+      "slug": "service",
+      "description": "Business logic and application service templates",
+      "icon": "⚙️",
+      "is_active": true,
+      "sort_order": 4,
+      "created_at": "2024-01-01T08:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z"
+    },
+    {
+      "id": "55555555-89ab-4def-8123-456789abcdef",
+      "name": "HTTP Handlers",
+      "display_name": "HTTP Handlers",
+      "slug": "handler",
+      "description": "Web API handlers and controllers",
+      "icon": "🌐",
+      "is_active": true,
+      "sort_order": 5,
+      "created_at": "2024-01-01T08:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z"
+    },
+    {
+      "id": "66666666-89ab-4def-8123-456789abcdef",
+      "name": "Middleware",
+      "display_name": "Middleware",
+      "slug": "middleware",
+      "description": "HTTP middleware and interceptors",
+      "icon": "🔗",
+      "is_active": true,
+      "sort_order": 6,
+      "created_at": "2024-01-01T08:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z"
+    },
+    {
+      "id": "77777777-89ab-4def-8123-456789abcdef",
+      "name": "Testing",
+      "display_name": "Testing",
+      "slug": "testing",
+      "description": "Unit tests, integration tests, and test utilities",
+      "icon": "🧪",
+      "is_active": true,
+      "sort_order": 7,
+      "created_at": "2024-01-01T08:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z"
+    },
+    {
+      "id": "88888888-89ab-4def-8123-456789abcdef",
+      "name": "Configuration",
+      "display_name": "Configuration",
+      "slug": "config",
+      "description": "Configuration files, environment setup, and deployment",
+      "icon": "⚙️",
+      "is_active": true,
+      "sort_order": 8,
+      "created_at": "2024-01-01T08:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z"
+    }
+  ]
+}
