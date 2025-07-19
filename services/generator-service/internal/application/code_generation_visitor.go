@@ -47,10 +47,12 @@ func (v *CodeGenerationVisitor) VisitRepository(ctx context.Context, element *do
 
 	// Prepare template parameters
 	parameters := map[string]string{
-		"EntityName":    element.EntityName,
-		"EntityVarName": strings.ToLower(element.EntityName),
-		"ModulePath":    v.modulePath,
-		"PackageName":   element.Package,
+		"EntityName":      element.EntityName,
+		"EntityVarName":   strings.ToLower(element.EntityName),
+		"ModulePath":      v.modulePath,
+		"PackageName":     "infrastructure", // Use infrastructure for repository package
+		"TableName":       strings.ToLower(element.EntityName) + "s",
+		"snake_case_name": strings.ToLower(element.EntityName),
 	}
 
 	// Merge with element parameters
@@ -59,19 +61,19 @@ func (v *CodeGenerationVisitor) VisitRepository(ctx context.Context, element *do
 	}
 
 	// Process template
-	generatedCode, err := v.templateClient.ProcessTemplate(ctx, "repository_template", parameters)
+	generatedCode, err := v.templateClient.ProcessTemplate(ctx, "go-repository-pattern-public", parameters)
 	if err != nil {
 		return fmt.Errorf("failed to process repository template: %w", err)
 	}
 
-	// Create generated file
+	// Use the template's output_path pattern: internal/infrastructure/{{.snake_case_name}}_repository.go
 	fileName := fmt.Sprintf("%s_repository.go", strings.ToLower(element.EntityName))
-	filePath := fmt.Sprintf("internal/infrastructure/repository/%s", fileName)
+	filePath := fmt.Sprintf("internal/infrastructure/%s", fileName)
 
 	file := domain.GeneratedFile{
 		Path:    filePath,
 		Content: generatedCode,
-		Package: element.Package,
+		Package: "infrastructure",
 		Type:    "repository",
 		Size:    int64(len(generatedCode)),
 	}
@@ -86,10 +88,11 @@ func (v *CodeGenerationVisitor) VisitService(ctx context.Context, element *domai
 
 	// Prepare template parameters
 	parameters := map[string]string{
-		"EntityName":    element.EntityName,
-		"EntityVarName": strings.ToLower(element.EntityName),
-		"ModulePath":    v.modulePath,
-		"PackageName":   element.Package,
+		"EntityName":      element.EntityName,
+		"EntityVarName":   strings.ToLower(element.EntityName),
+		"ModulePath":      v.modulePath,
+		"PackageName":     "application", // Use application for service package
+		"snake_case_name": strings.ToLower(element.EntityName),
 	}
 
 	// Merge with element parameters
@@ -98,19 +101,19 @@ func (v *CodeGenerationVisitor) VisitService(ctx context.Context, element *domai
 	}
 
 	// Process template
-	generatedCode, err := v.templateClient.ProcessTemplate(ctx, "service_template", parameters)
+	generatedCode, err := v.templateClient.ProcessTemplate(ctx, "go-application-service-public", parameters)
 	if err != nil {
 		return fmt.Errorf("failed to process service template: %w", err)
 	}
 
-	// Create generated file
+	// Use the template's output_path pattern: internal/application/{{.snake_case_name}}_service.go
 	fileName := fmt.Sprintf("%s_service.go", strings.ToLower(element.EntityName))
 	filePath := fmt.Sprintf("internal/application/%s", fileName)
 
 	file := domain.GeneratedFile{
 		Path:    filePath,
 		Content: generatedCode,
-		Package: element.Package,
+		Package: "application",
 		Type:    "service",
 		Size:    int64(len(generatedCode)),
 	}
@@ -129,7 +132,8 @@ func (v *CodeGenerationVisitor) VisitHandler(ctx context.Context, element *domai
 		"EntityVarName":   strings.ToLower(element.EntityName),
 		"EntityNameLower": strings.ToLower(element.EntityName),
 		"ModulePath":      v.modulePath,
-		"PackageName":     element.Package,
+		"PackageName":     "handlers", // Use handlers for handler package
+		"snake_case_name": strings.ToLower(element.EntityName),
 	}
 
 	// Merge with element parameters
@@ -138,19 +142,19 @@ func (v *CodeGenerationVisitor) VisitHandler(ctx context.Context, element *domai
 	}
 
 	// Process template
-	generatedCode, err := v.templateClient.ProcessTemplate(ctx, "handler_template", parameters)
+	generatedCode, err := v.templateClient.ProcessTemplate(ctx, "go-gin-http-handler-public", parameters)
 	if err != nil {
 		return fmt.Errorf("failed to process handler template: %w", err)
 	}
 
-	// Create generated file
+	// Use the template's output_path pattern: internal/interfaces/http/handlers/{{.snake_case_name}}_handler.go
 	fileName := fmt.Sprintf("%s_handler.go", strings.ToLower(element.EntityName))
 	filePath := fmt.Sprintf("internal/interfaces/http/handlers/%s", fileName)
 
 	file := domain.GeneratedFile{
 		Path:    filePath,
 		Content: generatedCode,
-		Package: element.Package,
+		Package: "handlers",
 		Type:    "handler",
 		Size:    int64(len(generatedCode)),
 	}
@@ -307,6 +311,9 @@ type {{.InterfaceName}} interface {
 func (v *CodeGenerationVisitor) VisitStruct(ctx context.Context, element *domain.StructElement) error {
 	fmt.Printf("Visiting struct: %s\n", element.Name)
 
+	// Detect imports needed based on field types
+	importsNeeded := make(map[string]bool)
+
 	// Prepare fields string
 	var fieldsStr strings.Builder
 	for _, field := range element.Fields {
@@ -315,12 +322,30 @@ func (v *CodeGenerationVisitor) VisitStruct(ctx context.Context, element *domain
 			fieldsStr.WriteString(fmt.Sprintf(" `%s`", field.Tags))
 		}
 		fieldsStr.WriteString("\n")
+
+		// Check for common imports based on field types
+		if strings.Contains(field.Type, "time.Time") {
+			importsNeeded["time"] = true
+		}
+		if strings.Contains(field.Type, "uuid.UUID") {
+			importsNeeded["github.com/google/uuid"] = true
+		}
+	}
+
+	// Build imports block if needed
+	var imports strings.Builder
+	if len(importsNeeded) > 0 {
+		imports.WriteString("import (\n")
+		for imp := range importsNeeded {
+			imports.WriteString(fmt.Sprintf("\t\"%s\"\n", imp))
+		}
+		imports.WriteString(")\n\n")
 	}
 
 	// Create struct template
 	structTemplate := `package {{.PackageName}}
 
-// {{.StructName}} represents a {{.StructName}}
+{{.Imports}}// {{.StructName}} represents a {{.StructName}}
 type {{.StructName}} struct {
 {{.Fields}}}`
 
@@ -329,6 +354,7 @@ type {{.StructName}} struct {
 		"StructName":  element.Name,
 		"PackageName": element.Package,
 		"Fields":      fieldsStr.String(),
+		"Imports":     imports.String(),
 	}
 
 	generatedCode := structTemplate
@@ -400,19 +426,27 @@ func {{.FunctionName}}({{.Parameters}}) {{.Returns}} {
 	// Check return types for cross-package references
 	for _, ret := range element.Returns {
 		if strings.Contains(ret.Type, "domain.") && element.Package != "domain" {
-			importsNeeded["go-factory-platform/services/compiler-builder-service/generated/internal/domain"] = true
+			importsNeeded[v.modulePath+"/internal/domain"] = true
 		}
 		if strings.Contains(ret.Type, "application.") && element.Package != "application" {
-			importsNeeded["go-factory-platform/services/compiler-builder-service/generated/internal/application"] = true
+			importsNeeded[v.modulePath+"/internal/application"] = true
 		}
 	}
 
 	// Check body for cross-package references
 	if strings.Contains(element.Body, "domain.") && element.Package != "domain" {
-		importsNeeded["go-factory-platform/services/compiler-builder-service/generated/internal/domain"] = true
+		importsNeeded[v.modulePath+"/internal/domain"] = true
 	}
 	if strings.Contains(element.Body, "application.") && element.Package != "application" {
-		importsNeeded["go-factory-platform/services/compiler-builder-service/generated/internal/application"] = true
+		importsNeeded[v.modulePath+"/internal/application"] = true
+	}
+
+	// Check for common imports in the body
+	if strings.Contains(element.Body, "uuid.New()") {
+		importsNeeded["github.com/google/uuid"] = true
+	}
+	if strings.Contains(element.Body, "time.Now()") {
+		importsNeeded["time"] = true
 	}
 
 	// Build imports block if needed
@@ -443,7 +477,21 @@ func {{.FunctionName}}({{.Parameters}}) {{.Returns}} {
 
 	// Create generated file
 	fileName := fmt.Sprintf("%s.go", strings.ToLower(element.Name))
-	filePath := fmt.Sprintf("internal/application/%s", fileName)
+
+	// Determine file path based on package
+	var filePath string
+	switch element.Package {
+	case "domain":
+		filePath = fmt.Sprintf("internal/domain/%s", fileName)
+	case "application":
+		filePath = fmt.Sprintf("internal/application/%s", fileName)
+	case "handlers":
+		filePath = fmt.Sprintf("internal/interfaces/http/handlers/%s", fileName)
+	case "infrastructure":
+		filePath = fmt.Sprintf("internal/infrastructure/%s", fileName)
+	default:
+		filePath = fmt.Sprintf("internal/application/%s", fileName) // Default fallback
+	}
 
 	file := domain.GeneratedFile{
 		Path:    filePath,

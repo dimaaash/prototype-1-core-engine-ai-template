@@ -64,6 +64,8 @@ echo ""
 
 # Generate User domain model and application service
 GENERATION_PAYLOAD='{
+  "output_path": "'$PROJECT_PATH'",
+  "module_path": "github.com/example/user-microservice",
   "elements": [
     {
       "type": "struct",
@@ -114,31 +116,17 @@ GENERATION_RESPONSE=$(curl -s -X POST http://localhost:8083/api/v1/generate \
 echo "$GENERATION_RESPONSE" | jq '.'
 
 echo ""
-echo -e "${BLUE}Step 3: Writing generated code to the project structure${NC}"
-echo "POST http://localhost:8084/api/v1/files/write"
+echo -e "${BLUE}Step 3: Verifying generated code was written to project structure${NC}"
+echo "Checking contents of: $PROJECT_PATH"
 echo ""
 
-# Extract generated files and write them to the project structure
-GENERATED_FILES=$(echo "$GENERATION_RESPONSE" | jq '.accumulator.files')
-
-WRITE_FILES_PAYLOAD=$(cat <<EOF
-{
-  "files": $GENERATED_FILES,
-  "output_path": "$PROJECT_PATH",
-  "metadata": {
-    "workflow": "enhanced-user-microservice",
-    "project_type": "microservice",
-    "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  }
-}
-EOF
-)
-
-WRITE_RESPONSE=$(curl -s -X POST http://localhost:8084/api/v1/files/write \
-    -H "Content-Type: application/json" \
-    -d "$WRITE_FILES_PAYLOAD")
-
-echo "$WRITE_RESPONSE" | jq '.'
+# Show the generated files in the project structure
+echo -e "${YELLOW}Generated files:${NC}"
+if [ -d "$PROJECT_PATH/internal" ]; then
+    find "$PROJECT_PATH/internal" -name "*.go" -type f | head -10
+else
+    echo "⚠️  No internal directory found in project structure"
+fi
 
 echo ""
 echo -e "${BLUE}Step 4: Validating project structure${NC}"

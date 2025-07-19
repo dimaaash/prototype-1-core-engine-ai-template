@@ -11,16 +11,19 @@ import (
 // TemplateApplicationService implements the business logic for templates
 type TemplateApplicationService struct {
 	templateService     domain.TemplateService
+	publicTemplateRepo  domain.PublicTemplateRepository
 	buildingBlockClient domain.BuildingBlockClient
 }
 
 // NewTemplateApplicationService creates a new template application service
 func NewTemplateApplicationService(
 	templateService domain.TemplateService,
+	publicTemplateRepo domain.PublicTemplateRepository,
 	buildingBlockClient domain.BuildingBlockClient,
 ) *TemplateApplicationService {
 	return &TemplateApplicationService{
 		templateService:     templateService,
+		publicTemplateRepo:  publicTemplateRepo,
 		buildingBlockClient: buildingBlockClient,
 	}
 }
@@ -74,277 +77,107 @@ func (s *TemplateApplicationService) ProcessTemplate(request *domain.TemplateReq
 	return result, nil
 }
 
-// CreateRepositoryTemplate creates a repository template
+// CreateRepositoryTemplate creates a repository template by reading from database
 func (s *TemplateApplicationService) CreateRepositoryTemplate(name, entityName string) (*domain.Template, error) {
-	content := `package repository
-
-import (
-	"context"
-	"fmt"
-
-	"{{.ModulePath}}/internal/domain"
-)
-
-type {{.EntityName}}Repository interface {
-	Create(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error
-	GetByID(ctx context.Context, id string) (*domain.{{.EntityName}}, error)
-	Update(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error
-	Delete(ctx context.Context, id string) error
-	List(ctx context.Context) ([]*domain.{{.EntityName}}, error)
-}
-
-type {{.EntityVarName}}Repository struct {
-	// Add your storage implementation here
-}
-
-func New{{.EntityName}}Repository() {{.EntityName}}Repository {
-	return &{{.EntityVarName}}Repository{}
-}
-
-func (r *{{.EntityVarName}}Repository) Create(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {
-	// Implementation here
-	return nil
-}
-
-func (r *{{.EntityVarName}}Repository) GetByID(ctx context.Context, id string) (*domain.{{.EntityName}}, error) {
-	// Implementation here
-	return nil, nil
-}
-
-func (r *{{.EntityVarName}}Repository) Update(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {
-	// Implementation here
-	return nil
-}
-
-func (r *{{.EntityVarName}}Repository) Delete(ctx context.Context, id string) error {
-	// Implementation here
-	return nil
-}
-
-func (r *{{.EntityVarName}}Repository) List(ctx context.Context) ([]*domain.{{.EntityName}}, error) {
-	// Implementation here
-	return nil, nil
-}`
-
-	parameters := []domain.Parameter{
-		{Name: "EntityName", Type: "string", Description: "Name of the entity", Required: true},
-		{Name: "EntityVarName", Type: "string", Description: "Variable name for the entity", Required: true},
-		{Name: "ModulePath", Type: "string", Description: "Go module path", Required: true},
+	// Get template from public templates database
+	publicTemplate, err := s.publicTemplateRepo.GetBySlug("go-repository-pattern-public")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repository template from database: %w", err)
 	}
 
-	tmpl := &domain.Template{
+	// Increment usage count
+	if err := s.publicTemplateRepo.IncrementUsageCount(publicTemplate.ID); err != nil {
+		// Log error but don't fail the request
+		fmt.Printf("Warning: failed to increment usage count for template %s: %v\n", publicTemplate.ID, err)
+	}
+
+	// Convert PublicTemplate to Template domain model
+	template := &domain.Template{
+		ID:          fmt.Sprintf("tmpl_%d", time.Now().UnixNano()),
 		Name:        name,
 		Category:    domain.CategoryRepository,
 		Description: fmt.Sprintf("Repository template for %s entity", entityName),
-		Content:     content,
-		Parameters:  parameters,
-		Examples:    []string{fmt.Sprintf("Repository for %s entity with CRUD operations", entityName)},
+		Content:     publicTemplate.Content,
+		Parameters: []domain.Parameter{
+			{Name: "EntityName", Type: "string", Description: "Name of the entity", Required: true},
+			{Name: "EntityVarName", Type: "string", Description: "Variable name for the entity", Required: true},
+			{Name: "ModulePath", Type: "string", Description: "Go module path", Required: true},
+		},
+		Examples:  []string{fmt.Sprintf("Repository for %s entity with CRUD operations", entityName)},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
-	return tmpl, s.CreateTemplate(tmpl)
+	return template, s.CreateTemplate(template)
 }
 
-// CreateServiceTemplate creates a service template
+// CreateServiceTemplate creates a service template by reading from database
 func (s *TemplateApplicationService) CreateServiceTemplate(name, entityName string) (*domain.Template, error) {
-	content := `package application
-
-import (
-	"context"
-	"fmt"
-
-	"{{.ModulePath}}/internal/domain"
-)
-
-type {{.EntityName}}Service struct {
-	repository domain.{{.EntityName}}Repository
-}
-
-func New{{.EntityName}}Service(repository domain.{{.EntityName}}Repository) *{{.EntityName}}Service {
-	return &{{.EntityName}}Service{
-		repository: repository,
-	}
-}
-
-func (s *{{.EntityName}}Service) Create{{.EntityName}}(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {
-	// Business logic here
-	if err := s.validate{{.EntityName}}({{.EntityVarName}}); err != nil {
-		return fmt.Errorf("validation failed: %w", err)
+	// Get template from public templates database
+	publicTemplate, err := s.publicTemplateRepo.GetBySlug("go-application-service-public")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get service template from database: %w", err)
 	}
 
-	return s.repository.Create(ctx, {{.EntityVarName}})
-}
-
-func (s *{{.EntityName}}Service) Get{{.EntityName}}(ctx context.Context, id string) (*domain.{{.EntityName}}, error) {
-	if id == "" {
-		return nil, fmt.Errorf("id cannot be empty")
+	// Increment usage count
+	if err := s.publicTemplateRepo.IncrementUsageCount(publicTemplate.ID); err != nil {
+		// Log error but don't fail the request
+		fmt.Printf("Warning: failed to increment usage count for template %s: %v\n", publicTemplate.ID, err)
 	}
 
-	return s.repository.GetByID(ctx, id)
-}
-
-func (s *{{.EntityName}}Service) Update{{.EntityName}}(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {
-	// Business logic here
-	if err := s.validate{{.EntityName}}({{.EntityVarName}}); err != nil {
-		return fmt.Errorf("validation failed: %w", err)
-	}
-
-	return s.repository.Update(ctx, {{.EntityVarName}})
-}
-
-func (s *{{.EntityName}}Service) Delete{{.EntityName}}(ctx context.Context, id string) error {
-	if id == "" {
-		return fmt.Errorf("id cannot be empty")
-	}
-
-	return s.repository.Delete(ctx, id)
-}
-
-func (s *{{.EntityName}}Service) List{{.EntityName}}s(ctx context.Context) ([]*domain.{{.EntityName}}, error) {
-	return s.repository.List(ctx)
-}
-
-func (s *{{.EntityName}}Service) validate{{.EntityName}}({{.EntityVarName}} *domain.{{.EntityName}}) error {
-	if {{.EntityVarName}} == nil {
-		return fmt.Errorf("{{.EntityVarName}} cannot be nil")
-	}
-	// Add more validation logic here
-	return nil
-}`
-
-	parameters := []domain.Parameter{
-		{Name: "EntityName", Type: "string", Description: "Name of the entity", Required: true},
-		{Name: "EntityVarName", Type: "string", Description: "Variable name for the entity", Required: true},
-		{Name: "ModulePath", Type: "string", Description: "Go module path", Required: true},
-	}
-
-	tmpl := &domain.Template{
+	// Convert PublicTemplate to Template domain model
+	template := &domain.Template{
+		ID:          fmt.Sprintf("tmpl_%d", time.Now().UnixNano()),
 		Name:        name,
 		Category:    domain.CategoryService,
 		Description: fmt.Sprintf("Service template for %s entity", entityName),
-		Content:     content,
-		Parameters:  parameters,
-		Examples:    []string{fmt.Sprintf("Service for %s entity with business logic", entityName)},
+		Content:     publicTemplate.Content,
+		Parameters: []domain.Parameter{
+			{Name: "EntityName", Type: "string", Description: "Name of the entity", Required: true},
+			{Name: "EntityVarName", Type: "string", Description: "Variable name for the entity", Required: true},
+			{Name: "ModulePath", Type: "string", Description: "Go module path", Required: true},
+		},
+		Examples:  []string{fmt.Sprintf("Service for %s entity with business logic", entityName)},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
-	return tmpl, s.CreateTemplate(tmpl)
+	return template, s.CreateTemplate(template)
 }
 
-// CreateHandlerTemplate creates a handler template
+// CreateHandlerTemplate creates a handler template by reading from database
 func (s *TemplateApplicationService) CreateHandlerTemplate(name, entityName string) (*domain.Template, error) {
-	content := `package handlers
-
-import (
-	"net/http"
-
-	"{{.ModulePath}}/internal/application"
-	"{{.ModulePath}}/internal/domain"
-
-	"github.com/gin-gonic/gin"
-)
-
-type {{.EntityName}}Handler struct {
-	service *application.{{.EntityName}}Service
-}
-
-func New{{.EntityName}}Handler(service *application.{{.EntityName}}Service) *{{.EntityName}}Handler {
-	return &{{.EntityName}}Handler{
-		service: service,
-	}
-}
-
-func (h *{{.EntityName}}Handler) Create{{.EntityName}}(c *gin.Context) {
-	var {{.EntityVarName}} domain.{{.EntityName}}
-	if err := c.ShouldBindJSON(&{{.EntityVarName}}); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := h.service.Create{{.EntityName}}(c.Request.Context(), &{{.EntityVarName}}); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, {{.EntityVarName}})
-}
-
-func (h *{{.EntityName}}Handler) Get{{.EntityName}}(c *gin.Context) {
-	id := c.Param("id")
-	{{.EntityVarName}}, err := h.service.Get{{.EntityName}}(c.Request.Context(), id)
+	// Get template from public templates database
+	publicTemplate, err := s.publicTemplateRepo.GetBySlug("go-gin-http-handler-public")
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
+		return nil, fmt.Errorf("failed to get handler template from database: %w", err)
 	}
 
-	c.JSON(http.StatusOK, {{.EntityVarName}})
-}
-
-func (h *{{.EntityName}}Handler) Update{{.EntityName}}(c *gin.Context) {
-	id := c.Param("id")
-	var {{.EntityVarName}} domain.{{.EntityName}}
-	if err := c.ShouldBindJSON(&{{.EntityVarName}}); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	// Increment usage count
+	if err := s.publicTemplateRepo.IncrementUsageCount(publicTemplate.ID); err != nil {
+		// Log error but don't fail the request
+		fmt.Printf("Warning: failed to increment usage count for template %s: %v\n", publicTemplate.ID, err)
 	}
 
-	// Set ID from URL parameter
-	{{.EntityVarName}}.ID = id
-
-	if err := h.service.Update{{.EntityName}}(c.Request.Context(), &{{.EntityVarName}}); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, {{.EntityVarName}})
-}
-
-func (h *{{.EntityName}}Handler) Delete{{.EntityName}}(c *gin.Context) {
-	id := c.Param("id")
-	if err := h.service.Delete{{.EntityName}}(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusNoContent, nil)
-}
-
-func (h *{{.EntityName}}Handler) List{{.EntityName}}s(c *gin.Context) {
-	{{.EntityVarName}}s, err := h.service.List{{.EntityName}}s(c.Request.Context())
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, {{.EntityVarName}}s)
-}
-
-func (h *{{.EntityName}}Handler) RegisterRoutes(router *gin.Engine) {
-	api := router.Group("/api/v1")
-	{
-		api.POST("/{{.EntityNameLower}}", h.Create{{.EntityName}})
-		api.GET("/{{.EntityNameLower}}/:id", h.Get{{.EntityName}})
-		api.PUT("/{{.EntityNameLower}}/:id", h.Update{{.EntityName}})
-		api.DELETE("/{{.EntityNameLower}}/:id", h.Delete{{.EntityName}})
-		api.GET("/{{.EntityNameLower}}", h.List{{.EntityName}}s)
-	}
-}`
-
-	parameters := []domain.Parameter{
-		{Name: "EntityName", Type: "string", Description: "Name of the entity", Required: true},
-		{Name: "EntityVarName", Type: "string", Description: "Variable name for the entity", Required: true},
-		{Name: "EntityNameLower", Type: "string", Description: "Lowercase entity name for routes", Required: true},
-		{Name: "ModulePath", Type: "string", Description: "Go module path", Required: true},
-	}
-
-	tmpl := &domain.Template{
+	// Convert PublicTemplate to Template domain model
+	template := &domain.Template{
+		ID:          fmt.Sprintf("tmpl_%d", time.Now().UnixNano()),
 		Name:        name,
 		Category:    domain.CategoryHandler,
 		Description: fmt.Sprintf("HTTP handler template for %s entity", entityName),
-		Content:     content,
-		Parameters:  parameters,
-		Examples:    []string{fmt.Sprintf("HTTP handlers for %s entity CRUD operations", entityName)},
+		Content:     publicTemplate.Content,
+		Parameters: []domain.Parameter{
+			{Name: "EntityName", Type: "string", Description: "Name of the entity", Required: true},
+			{Name: "EntityVarName", Type: "string", Description: "Variable name for the entity", Required: true},
+			{Name: "EntityNameLower", Type: "string", Description: "Lowercase entity name for routes", Required: true},
+			{Name: "ModulePath", Type: "string", Description: "Go module path", Required: true},
+		},
+		Examples:  []string{fmt.Sprintf("HTTP handlers for %s entity CRUD operations", entityName)},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
-	return tmpl, s.CreateTemplate(tmpl)
+	return template, s.CreateTemplate(template)
 }
 
 // validateTemplateContent validates the template content

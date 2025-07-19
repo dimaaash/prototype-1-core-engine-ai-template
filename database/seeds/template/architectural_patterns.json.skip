@@ -1,0 +1,198 @@
+{
+  "service": "template",
+  "table": "public_templates",
+  "description": "Architectural pattern templates for repository, service, and handler layers",
+  "dependencies": ["template.public_template_categories"],
+  "data": [
+    {
+      "id": "a1234567-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go Repository Pattern",
+      "display_name": "Go Repository Pattern Template",
+      "description": "Complete repository implementation with CRUD operations following repository pattern",
+      "slug": "go-repository-pattern-public",
+      "template_category": "go-patterns",
+      "template_type": "code",
+      "content": "package {{.PackageName}}\n\nimport (\n\t\"context\"\n\t\"database/sql\"\n\t\"fmt\"\n\n\t\"{{.ModulePath}}/internal/domain\"\n\n\t\"github.com/lib/pq\"\n)\n\n// {{.EntityName}}Repository implements domain.{{.EntityName}}Repository\ntype {{.EntityName}}Repository struct {\n\tdb *sql.DB\n}\n\n// New{{.EntityName}}Repository creates a new {{.EntityName}} repository\nfunc New{{.EntityName}}Repository(db *sql.DB) *{{.EntityName}}Repository {\n\treturn &{{.EntityName}}Repository{\n\t\tdb: db,\n\t}\n}\n\n// Create creates a new {{.EntityVarName}}\nfunc (r *{{.EntityName}}Repository) Create(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {\n\tquery := `\n\t\tINSERT INTO {{.TableName}} (name, description, created_at, updated_at)\n\t\tVALUES ($1, $2, NOW(), NOW())\n\t\tRETURNING id, created_at, updated_at`\n\n\terr := r.db.QueryRowContext(ctx, query, {{.EntityVarName}}.Name, {{.EntityVarName}}.Description).Scan(\n\t\t&{{.EntityVarName}}.ID, &{{.EntityVarName}}.CreatedAt, &{{.EntityVarName}}.UpdatedAt,\n\t)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"failed to create {{.EntityVarName}}: %w\", err)\n\t}\n\n\treturn nil\n}\n\n// GetByID retrieves a {{.EntityVarName}} by ID\nfunc (r *{{.EntityName}}Repository) GetByID(ctx context.Context, id string) (*domain.{{.EntityName}}, error) {\n\tquery := `\n\t\tSELECT id, name, description, created_at, updated_at\n\t\tFROM {{.TableName}}\n\t\tWHERE id = $1`\n\n\t{{.EntityVarName}} := &domain.{{.EntityName}}{}\n\terr := r.db.QueryRowContext(ctx, query, id).Scan(\n\t\t&{{.EntityVarName}}.ID, &{{.EntityVarName}}.Name, &{{.EntityVarName}}.Description,\n\t\t&{{.EntityVarName}}.CreatedAt, &{{.EntityVarName}}.UpdatedAt,\n\t)\n\tif err != nil {\n\t\tif err == sql.ErrNoRows {\n\t\t\treturn nil, fmt.Errorf(\"{{.EntityVarName}} not found\")\n\t\t}\n\t\treturn nil, fmt.Errorf(\"failed to get {{.EntityVarName}}: %w\", err)\n\t}\n\n\treturn {{.EntityVarName}}, nil\n}\n\n// Update updates a {{.EntityVarName}}\nfunc (r *{{.EntityName}}Repository) Update(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {\n\tquery := `\n\t\tUPDATE {{.TableName}}\n\t\tSET name = $2, description = $3, updated_at = NOW()\n\t\tWHERE id = $1\n\t\tRETURNING updated_at`\n\n\terr := r.db.QueryRowContext(ctx, query, {{.EntityVarName}}.ID, {{.EntityVarName}}.Name, {{.EntityVarName}}.Description).Scan(\n\t\t&{{.EntityVarName}}.UpdatedAt,\n\t)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"failed to update {{.EntityVarName}}: %w\", err)\n\t}\n\n\treturn nil\n}\n\n// Delete deletes a {{.EntityVarName}}\nfunc (r *{{.EntityName}}Repository) Delete(ctx context.Context, id string) error {\n\tquery := `DELETE FROM {{.TableName}} WHERE id = $1`\n\n\tresult, err := r.db.ExecContext(ctx, query, id)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"failed to delete {{.EntityVarName}}: %w\", err)\n\t}\n\n\trowsAffected, err := result.RowsAffected()\n\tif err != nil {\n\t\treturn fmt.Errorf(\"failed to get rows affected: %w\", err)\n\t}\n\n\tif rowsAffected == 0 {\n\t\treturn fmt.Errorf(\"{{.EntityVarName}} not found\")\n\t}\n\n\treturn nil\n}\n\n// List retrieves all {{.EntityVarName}}s\nfunc (r *{{.EntityName}}Repository) List(ctx context.Context) ([]*domain.{{.EntityName}}, error) {\n\tquery := `\n\t\tSELECT id, name, description, created_at, updated_at\n\t\tFROM {{.TableName}}\n\t\tORDER BY created_at DESC`\n\n\trows, err := r.db.QueryContext(ctx, query)\n\tif err != nil {\n\t\treturn nil, fmt.Errorf(\"failed to list {{.EntityVarName}}s: %w\", err)\n\t}\n\tdefer rows.Close()\n\n\tvar {{.EntityVarName}}s []*domain.{{.EntityName}}\n\tfor rows.Next() {\n\t\t{{.EntityVarName}} := &domain.{{.EntityName}}{}\n\t\terr := rows.Scan(\n\t\t\t&{{.EntityVarName}}.ID, &{{.EntityVarName}}.Name, &{{.EntityVarName}}.Description,\n\t\t\t&{{.EntityVarName}}.CreatedAt, &{{.EntityVarName}}.UpdatedAt,\n\t\t)\n\t\tif err != nil {\n\t\t\treturn nil, fmt.Errorf(\"failed to scan {{.EntityVarName}} row: %w\", err)\n\t\t}\n\t\t{{.EntityVarName}}s = append({{.EntityVarName}}s, {{.EntityVarName}})\n\t}\n\n\tif err := rows.Err(); err != nil {\n\t\treturn nil, fmt.Errorf(\"error iterating {{.EntityVarName}} rows: %w\", err)\n\t}\n\n\treturn {{.EntityVarName}}s, nil\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "standard",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": true,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 30,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "internal/infrastructure/{{.snake_case_name}}_repository.go",
+      "variables": {
+        "PackageName": {
+          "description": "Package name for the repository",
+          "example": "infrastructure"
+        },
+        "EntityName": {
+          "description": "Name of the entity (PascalCase)",
+          "example": "User"
+        },
+        "EntityVarName": {
+          "description": "Variable name for the entity (camelCase)",
+          "example": "user"
+        },
+        "ModulePath": {
+          "description": "Go module path",
+          "example": "github.com/myorg/myapp"
+        },
+        "TableName": {
+          "description": "Database table name (snake_case)",
+          "example": "users"
+        }
+      },
+      "configuration": {
+        "supports_crud": true,
+        "supports_context": true,
+        "supports_error_handling": true,
+        "database_driver": "postgres"
+      },
+      "dependencies": ["github.com/lib/pq"],
+      "tags": ["go", "repository", "pattern", "crud", "database", "postgres"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go repository pattern crud database postgres sql",
+      "created_at": "2024-01-01T10:00:00Z",
+      "updated_at": "2024-01-01T10:00:00Z",
+      "published_at": "2024-01-01T10:00:00Z"
+    },
+    {
+      "id": "b2345678-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go Application Service",
+      "display_name": "Go Application Service Template",
+      "description": "Application service template with business logic and validation",
+      "slug": "go-application-service-public",
+      "template_category": "go-patterns",
+      "template_type": "code",
+      "content": "package application\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\t\"time\"\n\n\t\"{{.ModulePath}}/internal/domain\"\n)\n\n// {{.EntityName}}Service implements business logic for {{.EntityVarName}} operations\ntype {{.EntityName}}Service struct {\n\t{{.EntityVarName}}Repo domain.{{.EntityName}}Repository\n}\n\n// New{{.EntityName}}Service creates a new {{.EntityName}} service\nfunc New{{.EntityName}}Service({{.EntityVarName}}Repo domain.{{.EntityName}}Repository) *{{.EntityName}}Service {\n\treturn &{{.EntityName}}Service{\n\t\t{{.EntityVarName}}Repo: {{.EntityVarName}}Repo,\n\t}\n}\n\n// Create{{.EntityName}} creates a new {{.EntityVarName}} with validation\nfunc (s *{{.EntityName}}Service) Create{{.EntityName}}(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {\n\t// Validate input\n\tif err := s.validate{{.EntityName}}({{.EntityVarName}}); err != nil {\n\t\treturn fmt.Errorf(\"validation failed: %w\", err)\n\t}\n\n\t// Set timestamps\n\tnow := time.Now()\n\t{{.EntityVarName}}.CreatedAt = now\n\t{{.EntityVarName}}.UpdatedAt = now\n\n\t// Create {{.EntityVarName}}\n\tif err := s.{{.EntityVarName}}Repo.Create(ctx, {{.EntityVarName}}); err != nil {\n\t\treturn fmt.Errorf(\"failed to create {{.EntityVarName}}: %w\", err)\n\t}\n\n\treturn nil\n}\n\n// Get{{.EntityName}} retrieves a {{.EntityVarName}} by ID\nfunc (s *{{.EntityName}}Service) Get{{.EntityName}}(ctx context.Context, id string) (*domain.{{.EntityName}}, error) {\n\tif id == \"\" {\n\t\treturn nil, fmt.Errorf(\"id cannot be empty\")\n\t}\n\n\t{{.EntityVarName}}, err := s.{{.EntityVarName}}Repo.GetByID(ctx, id)\n\tif err != nil {\n\t\treturn nil, fmt.Errorf(\"failed to get {{.EntityVarName}}: %w\", err)\n\t}\n\n\treturn {{.EntityVarName}}, nil\n}\n\n// Update{{.EntityName}} updates an existing {{.EntityVarName}}\nfunc (s *{{.EntityName}}Service) Update{{.EntityName}}(ctx context.Context, {{.EntityVarName}} *domain.{{.EntityName}}) error {\n\t// Validate input\n\tif err := s.validate{{.EntityName}}({{.EntityVarName}}); err != nil {\n\t\treturn fmt.Errorf(\"validation failed: %w\", err)\n\t}\n\n\t// Check if {{.EntityVarName}} exists\n\texisting, err := s.{{.EntityVarName}}Repo.GetByID(ctx, {{.EntityVarName}}.ID)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"{{.EntityVarName}} not found: %w\", err)\n\t}\n\n\t// Preserve creation time\n\t{{.EntityVarName}}.CreatedAt = existing.CreatedAt\n\t{{.EntityVarName}}.UpdatedAt = time.Now()\n\n\t// Update {{.EntityVarName}}\n\tif err := s.{{.EntityVarName}}Repo.Update(ctx, {{.EntityVarName}}); err != nil {\n\t\treturn fmt.Errorf(\"failed to update {{.EntityVarName}}: %w\", err)\n\t}\n\n\treturn nil\n}\n\n// Delete{{.EntityName}} deletes a {{.EntityVarName}} by ID\nfunc (s *{{.EntityName}}Service) Delete{{.EntityName}}(ctx context.Context, id string) error {\n\tif id == \"\" {\n\t\treturn fmt.Errorf(\"id cannot be empty\")\n\t}\n\n\t// Check if {{.EntityVarName}} exists\n\t_, err := s.{{.EntityVarName}}Repo.GetByID(ctx, id)\n\tif err != nil {\n\t\treturn fmt.Errorf(\"{{.EntityVarName}} not found: %w\", err)\n\t}\n\n\t// Delete {{.EntityVarName}}\n\tif err := s.{{.EntityVarName}}Repo.Delete(ctx, id); err != nil {\n\t\treturn fmt.Errorf(\"failed to delete {{.EntityVarName}}: %w\", err)\n\t}\n\n\treturn nil\n}\n\n// List{{.EntityName}}s retrieves all {{.EntityVarName}}s\nfunc (s *{{.EntityName}}Service) List{{.EntityName}}s(ctx context.Context) ([]*domain.{{.EntityName}}, error) {\n\t{{.EntityVarName}}s, err := s.{{.EntityVarName}}Repo.List(ctx)\n\tif err != nil {\n\t\treturn nil, fmt.Errorf(\"failed to list {{.EntityVarName}}s: %w\", err)\n\t}\n\n\treturn {{.EntityVarName}}s, nil\n}\n\n// validate{{.EntityName}} validates {{.EntityVarName}} data\nfunc (s *{{.EntityName}}Service) validate{{.EntityName}}({{.EntityVarName}} *domain.{{.EntityName}}) error {\n\tif {{.EntityVarName}} == nil {\n\t\treturn fmt.Errorf(\"{{.EntityVarName}} cannot be nil\")\n\t}\n\n\tif {{.EntityVarName}}.Name == \"\" {\n\t\treturn fmt.Errorf(\"{{.EntityVarName}} name is required\")\n\t}\n\n\tif len({{.EntityVarName}}.Name) > 255 {\n\t\treturn fmt.Errorf(\"{{.EntityVarName}} name too long (max 255 characters)\")\n\t}\n\n\tif len({{.EntityVarName}}.Description) > 1000 {\n\t\treturn fmt.Errorf(\"{{.EntityVarName}} description too long (max 1000 characters)\")\n\t}\n\n\treturn nil\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "standard",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": true,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 25,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "internal/application/{{.snake_case_name}}_service.go",
+      "variables": {
+        "EntityName": {
+          "description": "Name of the entity (PascalCase)",
+          "example": "User"
+        },
+        "EntityVarName": {
+          "description": "Variable name for the entity (camelCase)",
+          "example": "user"
+        },
+        "ModulePath": {
+          "description": "Go module path",
+          "example": "github.com/myorg/myapp"
+        }
+      },
+      "configuration": {
+        "supports_validation": true,
+        "supports_business_logic": true,
+        "supports_error_handling": true,
+        "supports_context": true
+      },
+      "dependencies": [],
+      "tags": ["go", "service", "application", "business-logic", "validation"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go application service business logic validation clean architecture",
+      "created_at": "2024-01-01T11:00:00Z",
+      "updated_at": "2024-01-01T11:00:00Z",
+      "published_at": "2024-01-01T11:00:00Z"
+    },
+    {
+      "id": "c3456789-89ab-4def-8123-456789abcdef",
+      "category_id": null,
+      "name": "Go Gin HTTP Handler",
+      "display_name": "Go Gin HTTP Handler Template",
+      "description": "Complete HTTP handlers using Gin framework with REST endpoints",
+      "slug": "go-gin-http-handler-public",
+      "template_category": "go-patterns",
+      "template_type": "code",
+      "content": "package handlers\n\nimport (\n\t\"net/http\"\n\n\t\"{{.ModulePath}}/internal/application\"\n\t\"{{.ModulePath}}/internal/domain\"\n\n\t\"github.com/gin-gonic/gin\"\n)\n\n// {{.EntityName}}Handler handles HTTP requests for {{.EntityVarName}} operations\ntype {{.EntityName}}Handler struct {\n\tservice *application.{{.EntityName}}Service\n}\n\n// New{{.EntityName}}Handler creates a new {{.EntityName}} handler\nfunc New{{.EntityName}}Handler(service *application.{{.EntityName}}Service) *{{.EntityName}}Handler {\n\treturn &{{.EntityName}}Handler{\n\t\tservice: service,\n\t}\n}\n\n// Create{{.EntityName}} handles POST /{{.EntityNameLower}}\n// @Summary Create a new {{.EntityVarName}}\n// @Description Create a new {{.EntityVarName}} with the provided data\n// @Tags {{.EntityNameLower}}\n// @Accept json\n// @Produce json\n// @Param {{.EntityVarName}} body domain.{{.EntityName}} true \"{{.EntityName}} data\"\n// @Success 201 {object} domain.{{.EntityName}}\n// @Failure 400 {object} map[string]string\n// @Failure 500 {object} map[string]string\n// @Router /{{.EntityNameLower}} [post]\nfunc (h *{{.EntityName}}Handler) Create{{.EntityName}}(c *gin.Context) {\n\tvar {{.EntityVarName}} domain.{{.EntityName}}\n\tif err := c.ShouldBindJSON(&{{.EntityVarName}}); err != nil {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": \"Invalid request body: \" + err.Error()})\n\t\treturn\n\t}\n\n\tif err := h.service.Create{{.EntityName}}(c.Request.Context(), &{{.EntityVarName}}); err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": \"Failed to create {{.EntityVarName}}: \" + err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusCreated, {{.EntityVarName}})\n}\n\n// Get{{.EntityName}} handles GET /{{.EntityNameLower}}/:id\n// @Summary Get a {{.EntityVarName}} by ID\n// @Description Retrieve a specific {{.EntityVarName}} by its ID\n// @Tags {{.EntityNameLower}}\n// @Produce json\n// @Param id path string true \"{{.EntityName}} ID\"\n// @Success 200 {object} domain.{{.EntityName}}\n// @Failure 404 {object} map[string]string\n// @Failure 500 {object} map[string]string\n// @Router /{{.EntityNameLower}}/{id} [get]\nfunc (h *{{.EntityName}}Handler) Get{{.EntityName}}(c *gin.Context) {\n\tid := c.Param(\"id\")\n\tif id == \"\" {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": \"ID parameter is required\"})\n\t\treturn\n\t}\n\n\t{{.EntityVarName}}, err := h.service.Get{{.EntityName}}(c.Request.Context(), id)\n\tif err != nil {\n\t\tc.JSON(http.StatusNotFound, gin.H{\"error\": \"{{.EntityName}} not found: \" + err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusOK, {{.EntityVarName}})\n}\n\n// Update{{.EntityName}} handles PUT /{{.EntityNameLower}}/:id\n// @Summary Update a {{.EntityVarName}}\n// @Description Update an existing {{.EntityVarName}} with the provided data\n// @Tags {{.EntityNameLower}}\n// @Accept json\n// @Produce json\n// @Param id path string true \"{{.EntityName}} ID\"\n// @Param {{.EntityVarName}} body domain.{{.EntityName}} true \"{{.EntityName}} data\"\n// @Success 200 {object} domain.{{.EntityName}}\n// @Failure 400 {object} map[string]string\n// @Failure 404 {object} map[string]string\n// @Failure 500 {object} map[string]string\n// @Router /{{.EntityNameLower}}/{id} [put]\nfunc (h *{{.EntityName}}Handler) Update{{.EntityName}}(c *gin.Context) {\n\tid := c.Param(\"id\")\n\tif id == \"\" {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": \"ID parameter is required\"})\n\t\treturn\n\t}\n\n\tvar {{.EntityVarName}} domain.{{.EntityName}}\n\tif err := c.ShouldBindJSON(&{{.EntityVarName}}); err != nil {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": \"Invalid request body: \" + err.Error()})\n\t\treturn\n\t}\n\n\t// Set ID from URL parameter\n\t{{.EntityVarName}}.ID = id\n\n\tif err := h.service.Update{{.EntityName}}(c.Request.Context(), &{{.EntityVarName}}); err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": \"Failed to update {{.EntityVarName}}: \" + err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusOK, {{.EntityVarName}})\n}\n\n// Delete{{.EntityName}} handles DELETE /{{.EntityNameLower}}/:id\n// @Summary Delete a {{.EntityVarName}}\n// @Description Delete a specific {{.EntityVarName}} by its ID\n// @Tags {{.EntityNameLower}}\n// @Param id path string true \"{{.EntityName}} ID\"\n// @Success 204\n// @Failure 404 {object} map[string]string\n// @Failure 500 {object} map[string]string\n// @Router /{{.EntityNameLower}}/{id} [delete]\nfunc (h *{{.EntityName}}Handler) Delete{{.EntityName}}(c *gin.Context) {\n\tid := c.Param(\"id\")\n\tif id == \"\" {\n\t\tc.JSON(http.StatusBadRequest, gin.H{\"error\": \"ID parameter is required\"})\n\t\treturn\n\t}\n\n\tif err := h.service.Delete{{.EntityName}}(c.Request.Context(), id); err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": \"Failed to delete {{.EntityVarName}}: \" + err.Error()})\n\t\treturn\n\t}\n\n\tc.Status(http.StatusNoContent)\n}\n\n// List{{.EntityName}}s handles GET /{{.EntityNameLower}}\n// @Summary List all {{.EntityVarName}}s\n// @Description Retrieve a list of all {{.EntityVarName}}s\n// @Tags {{.EntityNameLower}}\n// @Produce json\n// @Success 200 {array} domain.{{.EntityName}}\n// @Failure 500 {object} map[string]string\n// @Router /{{.EntityNameLower}} [get]\nfunc (h *{{.EntityName}}Handler) List{{.EntityName}}s(c *gin.Context) {\n\t{{.EntityVarName}}s, err := h.service.List{{.EntityName}}s(c.Request.Context())\n\tif err != nil {\n\t\tc.JSON(http.StatusInternalServerError, gin.H{\"error\": \"Failed to list {{.EntityVarName}}s: \" + err.Error()})\n\t\treturn\n\t}\n\n\tc.JSON(http.StatusOK, {{.EntityVarName}}s)\n}\n\n// RegisterRoutes registers all {{.EntityVarName}} routes\nfunc (h *{{.EntityName}}Handler) RegisterRoutes(router *gin.Engine) {\n\tapi := router.Group(\"/api/v1\")\n\t{\n\t\tapi.POST(\"/{{.EntityNameLower}}\", h.Create{{.EntityName}})\n\t\tapi.GET(\"/{{.EntityNameLower}}/:id\", h.Get{{.EntityName}})\n\t\tapi.PUT(\"/{{.EntityNameLower}}/:id\", h.Update{{.EntityName}})\n\t\tapi.DELETE(\"/{{.EntityNameLower}}/:id\", h.Delete{{.EntityName}})\n\t\tapi.GET(\"/{{.EntityNameLower}}\", h.List{{.EntityName}}s)\n\t}\n}",
+      "content_type": "handlebars",
+      "language": "go",
+      "framework": "gin",
+      "version": "1.0.0",
+      "major_version": 1,
+      "minor_version": 0,
+      "patch_version": 0,
+      "is_latest_version": true,
+      "is_active": true,
+      "is_published": true,
+      "is_draft": false,
+      "is_featured": true,
+      "complexity_level": "intermediate",
+      "estimated_time_minutes": 35,
+      "usage_count": 0,
+      "download_count": 0,
+      "like_count": 0,
+      "is_validated": true,
+      "file_extension": ".go",
+      "output_path": "internal/interfaces/http/handlers/{{.snake_case_name}}_handler.go",
+      "variables": {
+        "EntityName": {
+          "description": "Name of the entity (PascalCase)",
+          "example": "User"
+        },
+        "EntityVarName": {
+          "description": "Variable name for the entity (camelCase)",
+          "example": "user"
+        },
+        "EntityNameLower": {
+          "description": "Lowercase entity name for routes (snake_case)",
+          "example": "users"
+        },
+        "ModulePath": {
+          "description": "Go module path",
+          "example": "github.com/myorg/myapp"
+        }
+      },
+      "configuration": {
+        "supports_rest_api": true,
+        "supports_swagger": true,
+        "supports_gin_framework": true,
+        "supports_error_handling": true,
+        "supports_context": true
+      },
+      "dependencies": ["github.com/gin-gonic/gin"],
+      "tags": ["go", "gin", "http", "handler", "rest", "api", "swagger"],
+      "license": "MIT",
+      "author_name": "Go Factory Platform",
+      "keywords": "go gin http handler rest api swagger crud endpoints",
+      "created_at": "2024-01-01T12:00:00Z",
+      "updated_at": "2024-01-01T12:00:00Z",
+      "published_at": "2024-01-01T12:00:00Z"
+    }
+  ]
+}
