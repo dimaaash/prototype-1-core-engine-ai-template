@@ -27,8 +27,16 @@ func (s *OrchestratorService) OrchestrateMicroservice(spec *domain.ProjectSpecif
 		CreatedAt:   time.Now(),
 	}
 
+	// Validate and enhance project specification based on type
+	enhancedSpec, err := s.enhanceProjectSpecification(spec)
+	if err != nil {
+		result.Success = false
+		result.ErrorMessage = err.Error()
+		return result, err
+	}
+
 	// Convert specification to generator payload
-	payload, err := s.convertToGeneratorPayload(spec)
+	payload, err := s.convertToGeneratorPayload(enhancedSpec)
 	if err != nil {
 		result.Success = false
 		result.ErrorMessage = err.Error()
@@ -36,7 +44,7 @@ func (s *OrchestratorService) OrchestrateMicroservice(spec *domain.ProjectSpecif
 	}
 
 	// Convert to generator service format
-	generationRequest, err := s.convertToGenerationRequest(spec, payload)
+	generationRequest, err := s.convertToGenerationRequest(enhancedSpec, payload)
 	if err != nil {
 		result.Success = false
 		result.ErrorMessage = err.Error()
@@ -435,4 +443,94 @@ func (s *OrchestratorService) getConstructorParams(entity domain.EntitySpecifica
 		}
 	}
 	return strings.Join(params, ", ")
+}
+
+// enhanceProjectSpecification enhances the project specification with defaults and project-type-specific configurations
+func (s *OrchestratorService) enhanceProjectSpecification(spec *domain.ProjectSpecification) (*domain.ProjectSpecification, error) {
+	enhanced := *spec // Copy the original spec
+
+	// Get project type configuration
+	typeConfig, exists := domain.ProjectTypeMapping[spec.ProjectType]
+	if !exists {
+		return nil, fmt.Errorf("unsupported project type: %s", spec.ProjectType)
+	}
+
+	// Merge default features with user-specified features
+	featureSet := make(map[string]bool)
+
+	// Add default features for this project type
+	for _, feature := range typeConfig.DefaultFeatures {
+		featureSet[feature] = true
+	}
+
+	// Add user-specified features
+	for _, feature := range spec.Features {
+		featureSet[feature] = true
+	}
+
+	// Convert back to slice
+	enhanced.Features = make([]string, 0, len(featureSet))
+	for feature := range featureSet {
+		enhanced.Features = append(enhanced.Features, feature)
+	}
+
+	// Merge default dependencies
+	depSet := make(map[string]bool)
+
+	// Add default dependencies for this project type
+	for _, dep := range typeConfig.DefaultDependencies {
+		depSet[dep] = true
+	}
+
+	// Add user-specified dependencies
+	for _, dep := range spec.Dependencies {
+		depSet[dep] = true
+	}
+
+	// Convert back to slice
+	enhanced.Dependencies = make([]string, 0, len(depSet))
+	for dep := range depSet {
+		enhanced.Dependencies = append(enhanced.Dependencies, dep)
+	}
+
+	return &enhanced, nil
+}
+
+// enhanceEntityForProjectType enhances entity based on project type
+func (s *OrchestratorService) enhanceEntityForProjectType(entity *domain.EntitySpecification, projectType string) domain.EntitySpecification {
+	enhanced := *entity
+
+	// Add default features based on project type
+	switch projectType {
+	case "microservice":
+		enhanced.Features = s.mergeFeatures(enhanced.Features, []string{"crud", "validation", "repository"})
+	case "api":
+		enhanced.Features = s.mergeFeatures(enhanced.Features, []string{"validation", "rest_api"})
+	case "cli":
+		enhanced.Features = s.mergeFeatures(enhanced.Features, []string{"validation"})
+	case "library":
+		enhanced.Features = s.mergeFeatures(enhanced.Features, []string{"validation", "testing"})
+	}
+
+	return enhanced
+}
+
+// mergeFeatures merges two feature slices, avoiding duplicates
+func (s *OrchestratorService) mergeFeatures(existing, additional []string) []string {
+	featureSet := make(map[string]bool)
+
+	for _, feature := range existing {
+		featureSet[feature] = true
+	}
+
+	for _, feature := range additional {
+		featureSet[feature] = true
+	}
+
+	result := make([]string, 0, len(featureSet))
+	for feature := range featureSet {
+		result = append(result, feature)
+	}
+
+	return result
 }

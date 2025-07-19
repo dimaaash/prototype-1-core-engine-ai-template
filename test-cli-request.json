@@ -1,0 +1,104 @@
+{
+  "name": "my-cli-tool",
+  "module_path": "github.com/example/my-cli-tool",
+  "output_path": "/tmp/generated/my-cli-tool",
+  "project_type": "cli",
+  "entities": [
+    {
+      "name": "ConfigFile",
+      "fields": [
+        {
+          "name": "ID",
+          "type": "uuid",
+          "required": true,
+          "primary_key": true
+        },
+        {
+          "name": "Path",
+          "type": "string",
+          "required": true,
+          "validation": ["max:500"]
+        },
+        {
+          "name": "Content",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "CreatedAt",
+          "type": "timestamp",
+          "required": true
+        }
+      ],
+      "relationships": [
+        {
+          "name": "config_entries",
+          "type": "one_to_many",
+          "target": "ConfigEntry",
+          "foreign_key": "config_file_id",
+          "description": "Config file has many entries"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "unique_config_path",
+          "type": "unique",
+          "fields": ["Path"]
+        },
+        {
+          "name": "non_empty_path",
+          "type": "check",
+          "fields": ["Path"],
+          "expression": "LENGTH(Path) > 0"
+        }
+      ],
+      "indexes": [
+        {
+          "type": "btree",
+          "fields": ["Path"],
+          "unique": true,
+          "name": "idx_config_path"
+        }
+      ],
+      "commands": [
+        {
+          "name": "create",
+          "description": "Create a new config file",
+          "flags": [
+            {
+              "name": "path",
+              "type": "string",
+              "required": true,
+              "description": "Path to the config file"
+            },
+            {
+              "name": "format",
+              "type": "string",
+              "default": "json",
+              "description": "Format of the config file"
+            }
+          ]
+        },
+        {
+          "name": "load",
+          "description": "Load an existing config file",
+          "flags": [
+            {
+              "name": "path",
+              "type": "string",
+              "required": true,
+              "description": "Path to the config file"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "features": [
+    "cli",
+    "config",
+    "logging",
+    "validation",
+    "testing"
+  ]
+}

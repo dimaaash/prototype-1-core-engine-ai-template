@@ -1,0 +1,157 @@
+{
+  "name": "order-microservice",
+  "module_path": "github.com/example/order-microservice",
+  "output_path": "/tmp/generated/order-microservice",
+  "project_type": "microservice",
+  "entities": [
+    {
+      "name": "Order",
+      "fields": [
+        {
+          "name": "ID",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "CustomerID",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "Status",
+          "type": "enum",
+          "enum": ["pending", "processing", "shipped", "delivered", "cancelled"],
+          "required": true,
+          "default": "pending"
+        },
+        {
+          "name": "TotalAmount",
+          "type": "decimal",
+          "required": true,
+          "validation": ["min:0"]
+        },
+        {
+          "name": "CreatedAt",
+          "type": "timestamp",
+          "required": true
+        }
+      ],
+      "relationships": [
+        {
+          "name": "order_items",
+          "type": "one_to_many",
+          "target": "OrderItem",
+          "foreign_key": "order_id",
+          "description": "Order has many items"
+        },
+        {
+          "name": "customer",
+          "type": "many_to_one",
+          "target": "Customer",
+          "foreign_key": "customer_id",
+          "description": "Order belongs to customer"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "positive_amount",
+          "type": "check",
+          "fields": ["TotalAmount"],
+          "expression": "total_amount >= 0"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_customer_status",
+          "type": "btree",
+          "fields": ["CustomerID", "Status"]
+        },
+        {
+          "name": "idx_created_at",
+          "type": "btree",
+          "fields": ["CreatedAt"]
+        }
+      ]
+    },
+    {
+      "name": "OrderItem",
+      "fields": [
+        {
+          "name": "ID",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "OrderID",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "ProductID",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "Quantity",
+          "type": "integer",
+          "required": true,
+          "validation": ["min:1"]
+        },
+        {
+          "name": "UnitPrice",
+          "type": "decimal",
+          "required": true,
+          "validation": ["min:0"]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "order",
+          "type": "many_to_one",
+          "target": "Order",
+          "foreign_key": "order_id",
+          "description": "Item belongs to order"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "positive_quantity",
+          "type": "check",
+          "fields": ["Quantity"],
+          "expression": "quantity > 0"
+        },
+        {
+          "name": "positive_price",
+          "type": "check",
+          "fields": ["UnitPrice"],
+          "expression": "unit_price >= 0"
+        }
+      ]
+    }
+  ],
+  "services": [
+    {
+      "name": "OrderService",
+      "type": "domain",
+      "description": "Business logic for order management",
+      "methods": [
+        "CreateOrder",
+        "UpdateOrderStatus",
+        "GetOrderByID",
+        "ListOrdersByCustomer"
+      ],
+      "dependencies": ["OrderRepository", "CustomerService"]
+    }
+  ],
+  "features": [
+    "rest_api",
+    "repository",
+    "service",
+    "validation",
+    "monitoring",
+    "logging",
+    "config",
+    "testing",
+    "documentation"
+  ]
+}

@@ -150,9 +150,25 @@ func (h *OrchestratorHandler) RegisterRoutes(router *gin.Engine) {
 	{
 		orchestrate := api.Group("/orchestrate")
 		{
+			// Generic orchestration (backwards compatible)
 			orchestrate.POST("/microservice", h.OrchestrateMicroservice)
 			orchestrate.POST("/payload", h.GetGeneratorPayload)
 			orchestrate.POST("/entity", h.CreateEntityPayload)
+
+			// Project type specific orchestration
+			orchestrate.POST("/api", h.OrchestrateAPI)
+			orchestrate.POST("/cli", h.OrchestrateCLI)
+			orchestrate.POST("/library", h.OrchestrateLibrary)
+			orchestrate.POST("/web", h.OrchestrateWeb)
+			orchestrate.POST("/worker", h.OrchestrateWorker)
+		}
+
+		// Project type information
+		info := api.Group("/info")
+		{
+			info.GET("/project-types", h.GetProjectTypes)
+			info.GET("/features", h.GetAvailableFeatures)
+			info.GET("/types", h.GetAvailableTypes)
 		}
 	}
 }
@@ -216,4 +232,174 @@ func (h *OrchestratorHandler) validateEntitySpecification(entity *domain.EntityS
 	}
 
 	return nil
+}
+
+// Project type specific orchestration handlers
+
+// OrchestrateAPI handles API project orchestration
+func (h *OrchestratorHandler) OrchestrateAPI(c *gin.Context) {
+	h.orchestrateProjectType(c, "api")
+}
+
+// OrchestrateCLI handles CLI project orchestration
+func (h *OrchestratorHandler) OrchestrateCLI(c *gin.Context) {
+	h.orchestrateProjectType(c, "cli")
+}
+
+// OrchestrateLibrary handles library project orchestration
+func (h *OrchestratorHandler) OrchestrateLibrary(c *gin.Context) {
+	h.orchestrateProjectType(c, "library")
+}
+
+// OrchestrateWeb handles web project orchestration
+func (h *OrchestratorHandler) OrchestrateWeb(c *gin.Context) {
+	h.orchestrateProjectType(c, "web")
+}
+
+// OrchestrateWorker handles worker project orchestration
+func (h *OrchestratorHandler) OrchestrateWorker(c *gin.Context) {
+	h.orchestrateProjectType(c, "worker")
+}
+
+// orchestrateProjectType is a helper method for project type specific orchestration
+func (h *OrchestratorHandler) orchestrateProjectType(c *gin.Context, projectType string) {
+	var spec domain.ProjectSpecification
+	if err := c.ShouldBindJSON(&spec); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+		return
+	}
+
+	// Set the project type
+	spec.ProjectType = projectType
+
+	// Validate specification
+	if err := h.validateProjectSpecification(&spec); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid specification: " + err.Error()})
+		return
+	}
+
+	result, err := h.service.OrchestrateMicroservice(&spec)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Orchestration failed: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// Information endpoints
+
+// GetProjectTypes returns available project types and their configurations
+func (h *OrchestratorHandler) GetProjectTypes(c *gin.Context) {
+	projectTypes := make(map[string]interface{})
+
+	for projectType, config := range domain.ProjectTypeMapping {
+		projectTypes[projectType] = map[string]interface{}{
+			"default_features":     config.DefaultFeatures,
+			"required_structure":   config.RequiredStructure,
+			"default_dependencies": config.DefaultDependencies,
+			"description":          h.getProjectTypeDescription(projectType),
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"project_types": projectTypes,
+		"count":         len(projectTypes),
+	})
+}
+
+// GetAvailableFeatures returns all available features and their descriptions
+func (h *OrchestratorHandler) GetAvailableFeatures(c *gin.Context) {
+	features := make(map[string]interface{})
+
+	for feature, implementations := range domain.FeatureMapping {
+		features[feature] = map[string]interface{}{
+			"implementations": implementations,
+			"description":     h.getFeatureDescription(feature),
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"features": features,
+		"count":    len(features),
+	})
+}
+
+// GetAvailableTypes returns all available field types and their Go mappings
+func (h *OrchestratorHandler) GetAvailableTypes(c *gin.Context) {
+	types := make(map[string]interface{})
+
+	for userType, goType := range domain.TypeMapping {
+		types[userType] = map[string]interface{}{
+			"go_type":     goType,
+			"description": h.getTypeDescription(userType),
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"types": types,
+		"count": len(types),
+	})
+}
+
+// Helper methods for descriptions
+
+func (h *OrchestratorHandler) getProjectTypeDescription(projectType string) string {
+	descriptions := map[string]string{
+		"microservice": "A complete microservice with REST API, database integration, and business logic",
+		"api":          "A REST API service with endpoints, validation, and middleware",
+		"cli":          "A command-line interface application with commands and flags",
+		"library":      "A reusable Go library package with documentation and examples",
+		"web":          "A web application with templates, static files, and session management",
+		"worker":       "A background worker service for queue processing and scheduled jobs",
+	}
+	if desc, exists := descriptions[projectType]; exists {
+		return desc
+	}
+	return "Custom project type"
+}
+
+func (h *OrchestratorHandler) getFeatureDescription(feature string) string {
+	descriptions := map[string]string{
+		"crud":          "Create, Read, Update, Delete operations for entities",
+		"validation":    "Input validation and data sanitization",
+		"rest_api":      "REST API endpoints with HTTP handlers",
+		"repository":    "Data access layer with database integration",
+		"service":       "Business logic layer with domain services",
+		"monitoring":    "Health checks, metrics, and observability",
+		"logging":       "Structured logging with multiple output formats",
+		"security":      "Authentication, authorization, and encryption",
+		"cache":         "Caching layer for improved performance",
+		"events":        "Event-driven architecture with pub/sub",
+		"messaging":     "Message queue integration for async processing",
+		"cli":           "Command-line interface with argument parsing",
+		"testing":       "Unit and integration test frameworks",
+		"documentation": "API documentation and code comments",
+	}
+	if desc, exists := descriptions[feature]; exists {
+		return desc
+	}
+	return "Custom feature implementation"
+}
+
+func (h *OrchestratorHandler) getTypeDescription(fieldType string) string {
+	descriptions := map[string]string{
+		"string":    "Basic text string",
+		"integer":   "Whole number (32-bit)",
+		"int64":     "Large whole number (64-bit)",
+		"float":     "Decimal number (64-bit)",
+		"boolean":   "True/false value",
+		"uuid":      "Universally unique identifier",
+		"email":     "Email address with validation",
+		"timestamp": "Date and time with timezone",
+		"json":      "JSON data structure",
+		"array":     "Array of values",
+		"decimal":   "High-precision decimal number",
+		"enum":      "Predefined set of values",
+		"binary":    "Binary data (byte array)",
+	}
+	if desc, exists := descriptions[fieldType]; exists {
+		return desc
+	}
+	return "Custom data type"
 }

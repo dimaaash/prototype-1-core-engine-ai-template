@@ -1,0 +1,79 @@
+{
+  "name": "user-api",
+  "module_path": "github.com/example/user-api",
+  "output_path": "/tmp/generated/user-api",
+  "project_type": "api",
+  "entities": [
+    {
+      "name": "User",
+      "fields": [
+        {
+          "name": "ID",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "Email",
+          "type": "email",
+          "required": true,
+          "unique": true,
+          "validation": ["email"]
+        },
+        {
+          "name": "Name",
+          "type": "string",
+          "required": true,
+          "validation": ["min:2", "max:100"]
+        },
+        {
+          "name": "Age",
+          "type": "integer",
+          "validation": ["min:18", "max:120"]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "unique_email",
+          "type": "unique",
+          "fields": ["Email"]
+        }
+      ],
+      "endpoints": [
+        {
+          "path": "/users",
+          "method": "GET",
+          "description": "List all users",
+          "response_type": "[]User"
+        },
+        {
+          "path": "/users",
+          "method": "POST",
+          "description": "Create a new user",
+          "request_type": "CreateUserRequest",
+          "response_type": "User"
+        },
+        {
+          "path": "/users/{id}",
+          "method": "GET",
+          "description": "Get user by ID",
+          "parameters": [
+            {
+              "name": "id",
+              "type": "string",
+              "location": "path",
+              "required": true
+            }
+          ],
+          "response_type": "User"
+        }
+      ]
+    }
+  ],
+  "features": [
+    "rest_api",
+    "validation",
+    "monitoring",
+    "security",
+    "documentation"
+  ]
+}
