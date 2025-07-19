@@ -1,0 +1,86 @@
+{
+  "name": "simple-api",
+  "module_path": "github.com/example/simple-api",
+  "output_path": "/tmp/generated/simple-api-integration-test",
+  "project_type": "api",
+  "entities": [
+    {
+      "name": "Product",
+      "fields": [
+        {
+          "name": "ID",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "Name",
+          "type": "string",
+          "required": true,
+          "validation": ["min:1", "max:100"]
+        },
+        {
+          "name": "Price",
+          "type": "decimal",
+          "required": true,
+          "validation": ["min:0"]
+        },
+        {
+          "name": "CategoryID",
+          "type": "uuid",
+          "required": true
+        }
+      ],
+      "relationships": [
+        {
+          "name": "category",
+          "type": "many_to_one",
+          "target": "Category",
+          "foreign_key": "category_id",
+          "description": "Product belongs to category"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "unique_product_name",
+          "type": "unique",
+          "fields": ["Name"]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_product_category",
+          "type": "btree",
+          "fields": ["CategoryID"]
+        }
+      ],
+      "endpoints": [
+        {
+          "path": "/products",
+          "method": "GET",
+          "description": "List all products",
+          "response_type": "[]Product"
+        },
+        {
+          "path": "/products/{id}",
+          "method": "GET",
+          "description": "Get product by ID",
+          "parameters": [
+            {
+              "name": "id",
+              "type": "string",
+              "location": "path",
+              "required": true
+            }
+          ],
+          "response_type": "Product"
+        }
+      ]
+    }
+  ],
+  "features": [
+    "rest_api",
+    "validation",
+    "monitoring",
+    "documentation"
+  ]
+}
